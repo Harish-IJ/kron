@@ -79,7 +79,7 @@ export async function createLog(input: CreateLogInput): Promise<Log> {
       // Re-use existing createLogMedia function below
       await createLogMedia({
         logId: id,
-        mediaType: filePath.endsWith('.mp4') ? 'video' : 'image',
+        mediaType: filePath.endsWith('.mp4') ? 'video' : 'photo',
         filePath,
       });
     }
