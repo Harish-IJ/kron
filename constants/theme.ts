@@ -7,17 +7,24 @@ export const COLORS = {
 
   // Accent & Brand
   primary: '#45645E', // Sage
+  onPrimary: '#DDFFF6',
   primaryContainer: '#C7EAE1',
   primaryFixedDim: '#B9DCD3',
+
+  // Secondary
+  secondaryContainer: '#C1E9F9',
+  onSecondaryContainer: '#315764',
 
   // Tertiary / Missed / Corrective
   tertiary: '#8C4E3F', // Terracotta
   tertiaryContainer: '#FDAD9A',
+  onTertiaryContainer: '#622D20',
 
   // Text & Borders
   onSurface: '#2C3435', // Never use pure black
   onSurfaceVariant: '#586162',
-  outlineVariant: 'rgba(171, 180, 181, 0.15)', // 15% opacity ghost border
+  outline: '#747C7D',
+  outlineVariant: '#ABB4B5',
 };
 
 export const TYPOGRAPHY = {
