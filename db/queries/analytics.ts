@@ -278,7 +278,7 @@ export async function getDaySummary(
     return {
       date: dateStr,
       streakId: streak.id,
-      dayStatus: 'missed',
+      dayStatus: dateStr === todayStr ? 'pending' : 'missed',
       logCount: 0,
       hasMedia: false,
       thumbnailPath: null,
@@ -358,7 +358,7 @@ export async function buildStreakCard(streak: Streak): Promise<StreakCard> {
 
   // Pending if today is scheduled + not paused + no "achieved" log yet
   const pendingToday =
-    todayStatus.dayStatus === 'missed' ||
+    todayStatus.dayStatus === 'pending' ||
     (todayStatus.dayStatus === 'not_achieved' && todayLogs.length < 3);
 
   return {
@@ -375,10 +375,13 @@ export async function buildStreakCard(streak: Streak): Promise<StreakCard> {
  */
 export async function buildDashboardCards(): Promise<StreakCard[]> {
   const db = await getDatabase();
+  // Sort by most recently active (last log date), fallback to created_at
   const rows = await db.getAllAsync<StreakRow>(
-    `SELECT * FROM streaks
-     WHERE status = 'active'
-     ORDER BY created_at DESC`
+    `SELECT s.*,
+       (SELECT MAX(l.log_date) FROM logs l WHERE l.streak_id = s.id) as last_log_date
+     FROM streaks s
+     WHERE s.status = 'active'
+     ORDER BY COALESCE(last_log_date, s.created_at) DESC`
   );
   const streaks = rows.map(mapStreakRow);
 

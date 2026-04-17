@@ -1,98 +1,223 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { useStreaks } from '@/hooks/useStreaks';
+import { useStreakContext } from '@/contexts/StreakContext';
+import type { StreakCard } from '@/db/types';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const { streaks, isLoading, isRefreshing, isEmpty, refresh } = useStreaks();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  // === Empty State ===
+  if (isEmpty) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyEmoji}>🌱</Text>
+        <Text style={styles.emptyTitle}>Start your first ritual</Text>
+        <Text style={styles.emptySubtext}>
+          Begin an intentional sequence of growth
+        </Text>
+        <Pressable
+          style={styles.emptyButton}
+          onPress={() => router.push('/create-streak')}
+        >
+          <Text style={styles.emptyButtonText}>Create Streak</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  // === Loading State ===
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.loadingText}>Loading rituals…</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>The Quiet Ritual</Text>
+        <Text style={styles.headerDate}>
+          {new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </Text>
+      </View>
+
+      {/* Streak Cards */}
+      <FlatList
+        data={streaks}
+        keyExtractor={(item) => item.streak.id}
+        renderItem={({ item }) => (
+          <StreakCardItem
+            card={item}
+            onPress={() => router.push(`/streak/${item.streak.id}`)}
+          />
+        )}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={refresh} />
+        }
+      />
+
+      {/* FAB */}
+      <Pressable
+        style={styles.fab}
+        onPress={() => router.push('/create-streak')}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </Pressable>
+    </View>
   );
 }
 
+// === Streak Card Component ===
+
+function StreakCardItem({
+  card,
+  onPress,
+}: {
+  card: StreakCard;
+  onPress: () => void;
+}) {
+  const { streak, todayStatus, weekSummary, pendingToday } = card;
+
+  return (
+    <Pressable style={styles.card} onPress={onPress}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardEmoji}>{streak.emoji ?? '🔥'}</Text>
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardName}>{streak.name}</Text>
+          <Text style={styles.cardStatus}>
+            {pendingToday ? 'Pending today' : todayStatus.dayStatus}
+          </Text>
+        </View>
+        <Text style={styles.cardCounter}>{streak.currentStreak}</Text>
+      </View>
+
+      {/* Week dots */}
+      <View style={styles.weekDots}>
+        {weekSummary.map((day) => (
+          <View
+            key={day.date}
+            style={[
+              styles.dot,
+              day.dayStatus === 'achieved' && styles.dotAchieved,
+              day.dayStatus === 'not_achieved' && styles.dotNotAchieved,
+              day.dayStatus === 'pending' && styles.dotPending,
+              day.dayStatus === 'missed' && styles.dotMissed,
+            ]}
+          />
+        ))}
+      </View>
+    </Pressable>
+  );
+}
+
+// === Styles (skeleton — no polish) ===
+
+const PRIMARY = '#45645E';
+
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: { flex: 1, backgroundColor: '#F8F9F9' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: '#586162', fontSize: 16 },
+
+  // Header
+  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16 },
+  headerTitle: { fontSize: 28, fontWeight: '700', color: '#2C3435' },
+  headerDate: { fontSize: 14, color: '#586162', marginTop: 4 },
+
+  // List
+  list: { padding: 16, paddingBottom: 100 },
+
+  // Card
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center' },
+  cardEmoji: { fontSize: 32, marginRight: 12 },
+  cardInfo: { flex: 1 },
+  cardName: { fontSize: 16, fontWeight: '600', color: '#2C3435' },
+  cardStatus: { fontSize: 12, color: '#586162', marginTop: 2 },
+  cardCounter: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: PRIMARY,
+  },
+
+  // Week dots
+  weekDots: {
     flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#E0E0E0',
+  },
+  dotAchieved: { backgroundColor: PRIMARY },
+  dotNotAchieved: { backgroundColor: '#D68C7A' },
+  dotPending: { backgroundColor: '#B9DCD3' },
+  dotMissed: { backgroundColor: '#E0E0E0' },
+
+  // Empty state
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#F8F9F9',
+    padding: 32,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  emptyEmoji: { fontSize: 48, marginBottom: 16 },
+  emptyTitle: { fontSize: 22, fontWeight: '600', color: '#2C3435' },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#586162',
+    marginTop: 8,
+    textAlign: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  emptyButton: {
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 24,
+  },
+  emptyButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  // FAB
+  fab: {
     position: 'absolute',
+    bottom: 32,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: PRIMARY,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
   },
+  fabText: { fontSize: 28, color: '#fff', marginTop: -2 },
 });

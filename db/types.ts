@@ -106,6 +106,7 @@ export interface DaySummary {
     | 'achieved'
     | 'not_achieved'
     | 'missed'
+    | 'pending'
     | 'paused'
     | 'not_scheduled'
     | 'future';
