@@ -6,9 +6,11 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  Switch,
   StyleSheet,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import * as streakService from '@/services/streakService';
 import { useStreakContext } from '@/contexts/StreakContext';
@@ -25,13 +27,35 @@ export default function CreateStreakScreen() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [emoji, setEmoji] = useState('🔥');
+  const [emoji, setEmoji] = useState('🌱');
   const [color, setColor] = useState(USER_COLORS[0]);
-  const [scheduleType, setScheduleType] = useState<ScheduleType>('daily');
+  
+  // Frequency State
+  const [freqMode, setFreqMode] = useState<'daily' | 'weekly' | 'custom'>('daily');
+  const [selectedDays, setSelectedDays] = useState<number[]>([]); // 0=Sun, 1=Mon...
+  const [intervalDays, setIntervalDays] = useState('2');
+  
+  // Time State
+  const [timeMode, setTimeMode] = useState<'all_day' | 'time'>('all_day');
+  const [startTime, setStartTime] = useState('08:00 AM');
+  const [endTime, setEndTime] = useState('');
+  
+  // Proof State
   const [proofType, setProofType] = useState<ProofType>('media');
-  const [visualizationType, setVisualizationType] =
-    useState<VisualizationType>('counter_dots');
-  const [targetDays, setTargetDays] = useState('');
+  
+  // Reminder State
+  const [selectedReminders, setSelectedReminders] = useState<string[]>([]);
+  
+  const REMINDER_OPTS = ['On time', '5 min before', '10 min before', '15 min before', '30 min before'];
+  const WEEKDAYS = [{l:'S',v:0},{l:'M',v:1},{l:'T',v:2},{l:'W',v:3},{l:'T',v:4},{l:'F',v:5},{l:'S',v:6}];
+
+  const toggleDay = (day: number) => {
+    setSelectedDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  };
+
+  const toggleReminder = (opt: string) => {
+    setSelectedReminders(prev => prev.includes(opt) ? prev.filter(r => r !== opt) : [...prev, opt]);
+  };
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -41,15 +65,19 @@ export default function CreateStreakScreen() {
 
     setCreating(true);
     try {
+      // Map front-end state to strictly typed db limits
+      let finalScheduleType: ScheduleType = 'daily';
+      if (freqMode === 'weekly') finalScheduleType = 'weekdays';
+      if (freqMode === 'custom') finalScheduleType = 'interval';
+      
       await streakService.createStreak({
         name: name.trim(),
         description: description.trim() || undefined,
         emoji,
         color,
-        scheduleType,
+        scheduleType: finalScheduleType,
         proofType,
-        visualizationType,
-        targetDays: targetDays ? parseInt(targetDays, 10) : undefined,
+        visualizationType: 'counter_dots',
       });
 
       await refresh();
@@ -65,213 +93,290 @@ export default function CreateStreakScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>New Ritual</Text>
-      <Text style={styles.subtitle}>
-        Begin an intentional sequence of growth
-      </Text>
-
-      {/* Name */}
-      <Text style={styles.label}>Name</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="Morning Run"
-        placeholderTextColor="#9E9E9E"
-      />
-
-      {/* Description */}
-      <Text style={styles.label}>Description (optional)</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Why does this ritual matter?"
-        placeholderTextColor="#9E9E9E"
-        multiline
-      />
-
-      {/* Emoji */}
-      <Text style={styles.label}>Emoji</Text>
-      <View style={styles.chipRow}>
-        {EMOJIS.map((e) => (
-          <Pressable
-            key={e}
-            style={[styles.emojiChip, emoji === e && styles.chipSelected]}
-            onPress={() => setEmoji(e)}
-          >
-            <Text style={styles.emojiText}>{e}</Text>
+    <View style={{ flex: 1, backgroundColor: COLORS.surfaceContainerHighest }}>
+      <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />
+      
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Pressable onPress={() => router.back()} style={styles.closeBtn}>
+            <MaterialIcons name="close" size={24} color={COLORS.primary} />
           </Pressable>
-        ))}
+          <Text style={styles.headerTitle}>The Quiet Ritual</Text>
+        </View>
       </View>
 
-      {/* Color */}
-      <Text style={styles.label}>Color</Text>
-      <View style={styles.chipRow}>
-        {USER_COLORS.map((c) => (
-          <Pressable
-            key={c}
-            style={[
-              styles.colorChip,
-              { backgroundColor: c },
-              color === c && styles.colorSelected,
-            ]}
-            onPress={() => setColor(c)}
-          />
-        ))}
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        {/* Hero Moment */}
+        <View style={styles.heroSection}>
+          <Text style={styles.title}>New Ritual</Text>
+          <Text style={styles.subtitle}>Begin an intentional sequence of growth</Text>
+        </View>
+
+        <View style={styles.formSection}>
+          {/* Streak Name */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Streak Name</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="e.g., Morning Meditation"
+                placeholderTextColor={COLORS.outlineVariant}
+              />
+            </View>
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Context (Optional)</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Why does this matter?"
+                placeholderTextColor={COLORS.outlineVariant}
+                multiline
+              />
+            </View>
+          </View>
+
+          {/* Frequency */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Frequency</Text>
+            <View style={styles.gridRow}>
+              {(['daily', 'weekly', 'custom'] as const).map((s) => (
+                <Pressable
+                  key={s}
+                  style={[styles.gridBtn, freqMode === s && styles.gridBtnActive]}
+                  onPress={() => setFreqMode(s)}
+                >
+                  <MaterialIcons 
+                    name={s === 'daily' ? 'calendar-today' : s === 'weekly' ? 'date-range' : 'event-repeat'} 
+                    size={24} 
+                    color={freqMode === s ? '#fff' : COLORS.onSurfaceVariant} 
+                    style={{ marginBottom: 8 }} 
+                  />
+                  <Text style={[styles.gridBtnText, freqMode === s && styles.gridBtnTextActive]}>
+                    {s}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            
+            {/* Conditional Frequency Sub-inputs */}
+            {freqMode === 'weekly' && (
+              <View style={styles.subInputContainer}>
+                <View style={styles.weekDaysRow}>
+                  {WEEKDAYS.map((d, i) => (
+                    <Pressable key={i} style={[styles.dayCircle, selectedDays.includes(d.v) && styles.dayCircleActive]} onPress={() => toggleDay(d.v)}>
+                      <Text style={[styles.dayCircleText, selectedDays.includes(d.v) && styles.dayCircleTextActive]}>{d.l}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            {freqMode === 'custom' && (
+              <View style={styles.subInputContainer}>
+                <View style={styles.inputContainer}>
+                  <TextInput 
+                    style={styles.input} 
+                    value={intervalDays} 
+                    onChangeText={setIntervalDays} 
+                    placeholder="Repeat every X days (e.g. 2)" 
+                    placeholderTextColor={COLORS.outlineVariant} 
+                    keyboardType="number-pad" 
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Time of the Day */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Time of the Day</Text>
+            <View style={styles.gridRow}>
+              {(['all_day', 'time'] as const).map((s) => (
+                <Pressable
+                  key={s}
+                  style={[styles.gridBtn, timeMode === s && styles.gridBtnActive]}
+                  onPress={() => setTimeMode(s)}
+                >
+                  <MaterialIcons 
+                    name={s === 'all_day' ? 'wb-sunny' : 'schedule'} 
+                    size={24} 
+                    color={timeMode === s ? '#fff' : COLORS.onSurfaceVariant} 
+                    style={{ marginBottom: 8 }} 
+                  />
+                  <Text style={[styles.gridBtnText, timeMode === s && styles.gridBtnTextActive]}>
+                    {s === 'all_day' ? 'All Day' : 'Time'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {/* Conditional Time Sub-inputs */}
+            {timeMode === 'time' && (
+              <View style={styles.subInputContainer}>
+                <View style={[styles.gridRow, { gap: 12 }]}>
+                   <View style={{ flex: 1 }}>
+                     <Text style={[styles.label, { fontSize: 9, marginBottom: 8 }]}>Start Time</Text>
+                     <View style={styles.inputContainer}>
+                       <TextInput style={[styles.input, { fontSize: 16, paddingVertical: 12 }]} value={startTime} onChangeText={setStartTime} placeholder="08:00 AM" placeholderTextColor={COLORS.outlineVariant} />
+                     </View>
+                   </View>
+                   <View style={{ flex: 1 }}>
+                     <Text style={[styles.label, { fontSize: 9, marginBottom: 8 }]}>End (Optional)</Text>
+                     <View style={styles.inputContainer}>
+                       <TextInput style={[styles.input, { fontSize: 16, paddingVertical: 12 }]} value={endTime} onChangeText={setEndTime} placeholder="--:--" placeholderTextColor={COLORS.outlineVariant} />
+                     </View>
+                   </View>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Gentle Reminders */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Reminders</Text>
+            <View style={styles.reminderRow}>
+              <View style={styles.reminderIconWrapper}>
+                <MaterialIcons name="notifications-active" size={24} color={COLORS.secondary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.reminderTitle}>Gentle Notifications</Text>
+                <Text style={styles.reminderSubtext}>Select when you want to be softly reminded</Text>
+              </View>
+            </View>
+            <View style={[styles.chipRow, { marginTop: 16 }]}>
+              {REMINDER_OPTS.map((opt) => (
+                <Pressable key={opt} style={[styles.reminderPill, selectedReminders.includes(opt) && styles.reminderPillActive]} onPress={() => toggleReminder(opt)}>
+                  <Text style={[styles.reminderPillText, selectedReminders.includes(opt) && styles.reminderPillTextActive]}>{opt}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          
+        </View>
+      </ScrollView>
+
+      {/* Fixed Footer */}
+      <View style={styles.footerCTA}>
+        <Pressable style={styles.createButton} onPress={handleCreate}>
+          <Text style={styles.createButtonText}>Start Streak</Text>
+        </Pressable>
       </View>
-
-      {/* Schedule */}
-      <Text style={styles.label}>Schedule</Text>
-      <View style={styles.chipRow}>
-        {(['daily', 'weekdays', 'interval'] as ScheduleType[]).map((s) => (
-          <Pressable
-            key={s}
-            style={[styles.chip, scheduleType === s && styles.chipActive]}
-            onPress={() => setScheduleType(s)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                scheduleType === s && styles.chipTextActive,
-              ]}
-            >
-              {s}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Proof Type */}
-      <Text style={styles.label}>Proof Type</Text>
-      <View style={styles.chipRow}>
-        {(['media', 'reflection'] as ProofType[]).map((p) => (
-          <Pressable
-            key={p}
-            style={[styles.chip, proofType === p && styles.chipActive]}
-            onPress={() => setProofType(p)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                proofType === p && styles.chipTextActive,
-              ]}
-            >
-              {p === 'media' ? '📷 Media' : '✍️ Reflection'}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Visualization */}
-      <Text style={styles.label}>Visualization</Text>
-      <View style={styles.chipRow}>
-        {(['counter_dots', 'heatmap', 'ring'] as VisualizationType[]).map(
-          (v) => (
-            <Pressable
-              key={v}
-              style={[
-                styles.chip,
-                visualizationType === v && styles.chipActive,
-              ]}
-              onPress={() => setVisualizationType(v)}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  visualizationType === v && styles.chipTextActive,
-                ]}
-              >
-                {v.replace('_', ' ')}
-              </Text>
-            </Pressable>
-          )
-        )}
-      </View>
-
-      {/* Target */}
-      <Text style={styles.label}>Target days (optional)</Text>
-      <TextInput
-        style={styles.input}
-        value={targetDays}
-        onChangeText={setTargetDays}
-        placeholder="e.g. 30"
-        placeholderTextColor="#9E9E9E"
-        keyboardType="number-pad"
-      />
-
-      {/* Submit */}
-      <Pressable style={styles.createButton} onPress={handleCreate}>
-        <Text style={styles.createButtonText}>Begin Ritual</Text>
-      </Pressable>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: 32, paddingBottom: 60 },
+  
+  header: {
+    paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: 'rgba(248, 249, 249, 0.7)', zIndex: 10,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  headerTitle: { ...TYPOGRAPHY.titleMd, color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 1 },
+  closeBtn: { padding: 4 },
 
-  title: { ...TYPOGRAPHY.displaySm, color: COLORS.onSurface, marginTop: 8 },
-  subtitle: { ...TYPOGRAPHY.bodyLg, color: COLORS.onSurfaceVariant, marginTop: 4, marginBottom: 32 },
+  content: { padding: 24, paddingBottom: 120 },
 
+  heroSection: { marginBottom: 32 },
+  title: { ...TYPOGRAPHY.displayLg, color: COLORS.primary, marginTop: 8 },
+  subtitle: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, marginTop: 8, textTransform: 'uppercase' },
+
+  formSection: { gap: 24 },
+  inputGroup: {},
   label: {
     ...TYPOGRAPHY.labelSm,
     color: COLORS.onSurfaceVariant,
     marginBottom: 12,
-    marginTop: 24,
+    marginLeft: 4,
     textTransform: 'uppercase',
   },
+  inputContainer: {
+    backgroundColor: COLORS.surfaceContainerLowest,
+    borderRadius: RADII.md,
+    padding: 4,
+  },
   input: {
-    backgroundColor: COLORS.surfaceContainerHighest,
-    borderRadius: RADII.lg,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    ...TYPOGRAPHY.bodyLg,
+    fontSize: 20,
+    fontWeight: '600',
     color: COLORS.onSurface,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   textArea: { height: 100, textAlignVertical: 'top' },
 
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: RADII.full,
-    backgroundColor: COLORS.surfaceContainerHighest,
-  },
-  chipActive: { backgroundColor: COLORS.primary },
-  chipText: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, fontWeight: '500' },
-  chipTextActive: { color: COLORS.surfaceContainerHighest },
-
-  emojiChip: {
-    width: 48,
-    height: 48,
-    borderRadius: RADII.lg,
-    backgroundColor: COLORS.surfaceContainerHighest,
-    justifyContent: 'center',
+  gridRow: { flexDirection: 'row', gap: 16 },
+  gridBtn: {
+    flex: 1,
+    backgroundColor: COLORS.surfaceContainerLow,
+    paddingVertical: 24,
+    borderRadius: RADII.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  chipSelected: { backgroundColor: COLORS.primaryContainer },
-  emojiText: { fontSize: 24 },
+  gridBtnActive: { backgroundColor: COLORS.primary },
+  gridBtnText: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, textTransform: 'uppercase' },
+  gridBtnTextActive: { color: COLORS.surfaceContainerHighest, fontWeight: '700' },
 
-  colorChip: {
-    width: 40,
-    height: 40,
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  
+  subInputContainer: { marginTop: 16 },
+  weekDaysRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: COLORS.surfaceContainerLowest, padding: 8, borderRadius: RADII.md },
+  dayCircle: { width: 36, height: 36, borderRadius: RADII.full, justifyContent: 'center', alignItems: 'center' },
+  dayCircleActive: { backgroundColor: COLORS.primaryContainer },
+  dayCircleText: { ...TYPOGRAPHY.labelMd, color: COLORS.onSurfaceVariant },
+  dayCircleTextActive: { color: COLORS.primary, fontWeight: '700' },
+  
+  reminderPill: {
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.surfaceContainerLowest,
+    borderWidth: 1, borderColor: 'rgba(171, 180, 181, 0.15)',
+  },
+  reminderPillActive: { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primaryContainer },
+  reminderPillText: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, fontWeight: '500' },
+  reminderPillTextActive: { color: COLORS.onPrimaryContainer, fontWeight: '700' },
+
+  reminderRow: {
+    backgroundColor: COLORS.surfaceContainerLow,
+    borderRadius: RADII.md,
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  reminderIconWrapper: {
+    backgroundColor: COLORS.surfaceContainerLowest,
+    padding: 12,
     borderRadius: RADII.full,
   },
-  colorSelected: {
-    borderWidth: 3,
-    borderColor: COLORS.onSurface,
-  },
+  reminderTitle: { ...TYPOGRAPHY.titleSm, color: COLORS.onSurface },
+  reminderSubtext: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant },
 
+  footerCTA: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(248, 249, 249, 0.8)',
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 16,
+  },
   createButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 18,
+    paddingVertical: 20,
     borderRadius: RADII.full,
     alignItems: 'center',
-    marginTop: 48,
     ...SHADOWS.floating,
   },
-  createButtonText: { ...TYPOGRAPHY.bodyLg, color: COLORS.surfaceContainerHighest, fontWeight: '600' },
+  createButtonText: { ...TYPOGRAPHY.labelSm, color: COLORS.surfaceContainerHighest, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
 });
