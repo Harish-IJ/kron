@@ -6,6 +6,7 @@ import { useTimeline } from '@/hooks/useTimeline';
 import { addDays, today } from '@/db/helpers';
 import { useState } from 'react';
 import { Calendar } from 'react-native-calendars';
+import { COLORS, TYPOGRAPHY, SHADOWS, RADII } from '@/constants/theme';
 
 export default function TimelineScreen() {
   const router = useRouter();
@@ -75,11 +76,14 @@ export default function TimelineScreen() {
               setViewMode('daily');
             }}
             markedDates={{
-              [selectedDate]: { selected: true, selectedColor: PRIMARY }
+              [selectedDate]: { selected: true, selectedColor: COLORS.primary }
             }}
             theme={{
-              todayTextColor: PRIMARY,
-              arrowColor: PRIMARY,
+              todayTextColor: COLORS.primary,
+              arrowColor: COLORS.primary,
+              textDayFontFamily: 'Inter_400Regular',
+              textMonthFontFamily: 'Inter_600SemiBold',
+              textDayHeaderFontFamily: 'Inter_500Medium',
             }}
           />
         </View>
@@ -129,55 +133,53 @@ export default function TimelineScreen() {
   );
 }
 
-const PRIMARY = '#45645E';
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F9' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  mutedText: { color: '#586162', fontSize: 14 },
-  emptyEmoji: { fontSize: 32, marginBottom: 8 },
+  mutedText: { ...TYPOGRAPHY.bodyLg, color: COLORS.onSurfaceVariant },
+  emptyEmoji: { fontSize: 48, marginBottom: 16 },
 
-  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: '#2C3435' },
-  toggleRow: { flexDirection: 'row', backgroundColor: '#E0E0E0', borderRadius: 8, padding: 2 },
-  toggleBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  toggleActive: { backgroundColor: '#fff' },
-  toggleText: { fontSize: 12, fontWeight: '600', color: '#586162' },
-  toggleTextActive: { color: PRIMARY },
+  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerTitle: { ...TYPOGRAPHY.displaySm, color: COLORS.onSurface },
+  toggleRow: { flexDirection: 'row', backgroundColor: COLORS.surfaceContainerLow, borderRadius: RADII.sm, padding: 4 },
+  toggleBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADII.sm },
+  toggleActive: { backgroundColor: COLORS.surfaceContainerHighest, ...SHADOWS.floating },
+  toggleText: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant },
+  toggleTextActive: { color: COLORS.primary },
 
-  calendarContainer: { padding: 16, backgroundColor: '#fff', margin: 16, borderRadius: 12 },
+  calendarContainer: { padding: 16, backgroundColor: COLORS.surfaceContainerHighest, margin: 16, borderRadius: RADII.lg },
 
   dateNav: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 24,
-    paddingVertical: 12,
+    gap: 32,
+    paddingVertical: 16,
   },
-  dateArrow: { fontSize: 20, color: PRIMARY, padding: 8 },
-  dateText: { fontSize: 16, fontWeight: '600', color: '#2C3435' },
+  dateArrow: { ...TYPOGRAPHY.titleMd, color: COLORS.primary, padding: 8 },
+  dateText: { ...TYPOGRAPHY.titleMd, color: COLORS.onSurface },
   disabled: { opacity: 0.3 },
 
   list: { padding: 16 },
   entry: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.md,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  entryEmoji: { fontSize: 24, marginRight: 12 },
+  entryEmoji: { fontSize: 32, marginRight: 16 },
   entryInfo: { flex: 1 },
-  entryName: { fontSize: 14, fontWeight: '600', color: '#2C3435' },
-  entryNote: { fontSize: 12, color: '#586162', marginTop: 2 },
+  entryName: { ...TYPOGRAPHY.titleSm, color: COLORS.onSurface },
+  entryNote: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, marginTop: 4 },
 
   statusPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADII.full,
   },
-  pillAchieved: { backgroundColor: '#E8F5E9' },
-  pillNotAchieved: { backgroundColor: '#FBE9E7' },
-  pillText: { fontSize: 11, fontWeight: '500', color: '#2C3435' },
+  pillAchieved: { backgroundColor: COLORS.primaryContainer },
+  pillNotAchieved: { backgroundColor: COLORS.tertiaryContainer },
+  pillText: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurface, textTransform: 'uppercase' },
 });

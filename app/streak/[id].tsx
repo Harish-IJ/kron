@@ -12,12 +12,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useStreak } from '@/hooks/useStreak';
 import { useStreakContext } from '@/contexts/StreakContext';
 import { useLoggingContext } from '@/contexts/LoggingContext';
+import { COLORS, TYPOGRAPHY, SHADOWS, RADII } from '@/constants/theme';
 import * as streakService from '@/services/streakService';
 
 export default function StreakDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { refresh: refreshDashboard } = useStreakContext();
+  const { openLoggingSheet } = useLoggingContext();
   const { streak, card, analytics, isLoading, error, refresh } = useStreak(
     id!
   );
@@ -37,8 +39,6 @@ export default function StreakDetailScreen() {
       </View>
     );
   }
-
-  const { openLoggingSheet } = useLoggingContext();
 
   const handleLogProof = () => {
     openLoggingSheet(streak.id, streak.proofType);
@@ -188,78 +188,73 @@ export default function StreakDetailScreen() {
   );
 }
 
-const PRIMARY = '#45645E';
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F9' },
-  content: { padding: 24, paddingBottom: 100 },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  content: { padding: 32, paddingBottom: 100 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  mutedText: { color: '#586162', fontSize: 14 },
+  mutedText: { ...TYPOGRAPHY.bodyLg, color: COLORS.onSurfaceVariant },
 
   // Hero
-  hero: { alignItems: 'center', marginBottom: 24 },
-  heroEmoji: { fontSize: 48, marginBottom: 8 },
-  heroCounter: { fontSize: 56, fontWeight: '700', color: PRIMARY },
-  heroLabel: { fontSize: 14, color: '#586162', marginTop: -4 },
-  heroName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2C3435',
-    marginTop: 12,
-  },
-  heroDesc: { fontSize: 14, color: '#586162', marginTop: 4, textAlign: 'center' },
+  hero: { alignItems: 'center', marginBottom: 32 },
+  heroEmoji: { fontSize: 56, marginBottom: 12 },
+  heroCounter: { ...TYPOGRAPHY.displayLg, color: COLORS.primary },
+  heroLabel: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, marginTop: -8, textTransform: 'uppercase' },
+  heroName: { ...TYPOGRAPHY.titleMd, color: COLORS.onSurface, marginTop: 16 },
+  heroDesc: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, marginTop: 4, textAlign: 'center' },
 
   // Week dots
   weekDots: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 24,
+    gap: 16,
+    marginBottom: 32,
   },
-  dotCol: { alignItems: 'center', gap: 4 },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#E0E0E0' },
-  dotAchieved: { backgroundColor: PRIMARY },
-  dotNotAchieved: { backgroundColor: '#D68C7A' },
-  dotPending: { backgroundColor: '#B9DCD3' },
-  dotLabel: { fontSize: 10, color: '#586162' },
+  dotCol: { alignItems: 'center', gap: 8 },
+  dot: { width: 12, height: 12, borderRadius: RADII.full, backgroundColor: COLORS.surfaceContainerLow },
+  dotAchieved: { backgroundColor: COLORS.primary },
+  dotNotAchieved: { backgroundColor: COLORS.tertiaryContainer },
+  dotPending: { backgroundColor: COLORS.primaryFixedDim },
+  dotLabel: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant },
 
   // Stats
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  statsRow: { flexDirection: 'row', gap: 16, marginBottom: 32 },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
     padding: 16,
     alignItems: 'center',
   },
-  statValue: { fontSize: 24, fontWeight: '700', color: PRIMARY },
-  statLabel: { fontSize: 11, color: '#586162', marginTop: 4 },
+  statValue: { ...TYPOGRAPHY.displaySm, color: COLORS.primary },
+  statLabel: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, marginTop: 4, textTransform: 'uppercase' },
 
   // Actions
-  actions: { marginBottom: 24 },
+  actions: { marginBottom: 32 },
   primaryButton: {
-    backgroundColor: PRIMARY,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 18,
+    borderRadius: RADII.full,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    ...SHADOWS.floating,
   },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  secondaryActions: { flexDirection: 'row', gap: 8 },
+  primaryButtonText: { ...TYPOGRAPHY.bodyLg, color: COLORS.surfaceContainerHighest, fontWeight: '600' },
+  secondaryActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   secondaryButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    borderRadius: 10,
+    minWidth: '45%',
+    backgroundColor: COLORS.surfaceContainerHighest, // Slightly elevated from background
+    paddingVertical: 14,
+    borderRadius: RADII.full,
     alignItems: 'center',
   },
-  secondaryButtonText: { fontSize: 13, fontWeight: '500', color: '#586162' },
+  secondaryButtonText: { ...TYPOGRAPHY.bodySm, fontWeight: '500', color: COLORS.onSurfaceVariant },
 
   // Info
   infoSection: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
+    padding: 24,
   },
-  infoRow: { fontSize: 14, color: '#586162', marginBottom: 6 },
+  infoRow: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, marginBottom: 8 },
 });

@@ -1,53 +1,99 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+export const COLORS = {
+  // Base
+  background: '#F8F9F9',
+  surface: '#F8F9F9',
+  surfaceContainerLow: '#F1F4F4',
+  surfaceContainerHighest: '#FFFFFF',
 
-import { Platform } from 'react-native';
+  // Accent & Brand
+  primary: '#45645E', // Sage
+  primaryContainer: '#C7EAE1',
+  primaryFixedDim: '#B9DCD3',
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+  // Tertiary / Missed / Corrective
+  tertiary: '#8C4E3F', // Terracotta
+  tertiaryContainer: '#FDAD9A',
 
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+  // Text & Borders
+  onSurface: '#2C3435', // Never use pure black
+  onSurfaceVariant: '#586162',
+  outlineVariant: 'rgba(171, 180, 181, 0.15)', // 15% opacity ghost border
+};
+
+export const TYPOGRAPHY = {
+  // Display scale
+  displayLg: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 56,
+    lineHeight: 64,
+    letterSpacing: -1,
   },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+  displaySm: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 32,
+    lineHeight: 40,
+    letterSpacing: -0.5,
+  },
+
+  // Titles
+  titleMd: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 18,
+    lineHeight: 24,
+    letterSpacing: 0,
+  },
+  titleSm: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0,
+  },
+
+  // Body
+  bodyLg: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0,
+  },
+  bodySm: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0,
+  },
+
+  // Detail / Metadata
+  labelSm: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
+    lineHeight: 16,
+    letterSpacing: 0.5, // Explicitly tracked out
+  },
+  labelMd: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0,
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+export const SHADOWS = {
+  // Ambient Shadow for floating elements, no hard drops
+  floating: {
+    shadowColor: COLORS.onSurface,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.04,
+    shadowRadius: 32,
+    elevation: 4, // Android fallback
   },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+};
+
+export const RADII = {
+  none: 0,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  full: 9999, // Pill buttons
+};

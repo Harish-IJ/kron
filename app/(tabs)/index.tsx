@@ -8,14 +8,25 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { useStreaks } from '@/hooks/useStreaks';
 import { useStreakContext } from '@/contexts/StreakContext';
+import { useLoggingContext } from '@/contexts/LoggingContext';
 import type { StreakCard } from '@/db/types';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { streaks, isLoading, isRefreshing, isEmpty, refresh } = useStreaks();
+  const { openLoggingSheet } = useLoggingContext();
+
+  const handleGlobalLog = () => {
+    // Quick log: prioritize the first pending streak, else pick the first active streak
+    const targetStreak = streaks.find(s => s.pendingToday)?.streak || streaks[0]?.streak;
+    if (targetStreak) {
+      openLoggingSheet(targetStreak.id, 'media');
+    }
+  };
 
   // === Empty State ===
   if (isEmpty) {
@@ -49,14 +60,22 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>The Quiet Ritual</Text>
-        <Text style={styles.headerDate}>
-          {new Date().toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
+        <View>
+          <Text style={styles.headerTitle}>The Quiet Ritual</Text>
+          <Text style={styles.headerDate}>
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </Text>
+        </View>
+        <Pressable
+          style={styles.headerButton}
+          onPress={() => router.push('/create-streak')}
+        >
+          <MaterialIcons name="add" size={32} color={COLORS.onSurface} />
+        </Pressable>
       </View>
 
       {/* Streak Cards */}
@@ -75,12 +94,13 @@ export default function HomeScreen() {
         }
       />
 
-      {/* FAB */}
+      {/* FAB - Adjusted position to clear bottom tabs */}
       <Pressable
         style={styles.fab}
-        onPress={() => router.push('/create-streak')}
+        onPress={handleGlobalLog}
       >
-        <Text style={styles.fabText}>+</Text>
+        <MaterialIcons name="camera-alt" size={24} color={COLORS.surfaceContainerHighest} />
+        <Text style={styles.fabText}>Log</Text>
       </Pressable>
     </View>
   );
@@ -131,93 +151,105 @@ function StreakCardItem({
 
 // === Styles (skeleton — no polish) ===
 
-const PRIMARY = '#45645E';
+import { COLORS, TYPOGRAPHY, SHADOWS, RADII } from '@/constants/theme';
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F9' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#586162', fontSize: 16 },
+  loadingText: { ...TYPOGRAPHY.bodyLg, color: COLORS.onSurfaceVariant },
 
   // Header
-  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16 },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: '#2C3435' },
-  headerDate: { fontSize: 14, color: '#586162', marginTop: 4 },
+  header: { 
+    paddingTop: 60, 
+    paddingHorizontal: 24, 
+    paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
+  },
+  headerTitle: { ...TYPOGRAPHY.displaySm, color: COLORS.onSurface },
+  headerDate: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, marginTop: 4, textTransform: 'uppercase' },
+  headerButton: {
+    padding: 8,
+    marginRight: -8,
+  },
 
   // List
   list: { padding: 16, paddingBottom: 100 },
 
   // Card
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
+    padding: 24, // Added more padding to break the tight grid feel
+    marginBottom: 16,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
-  cardEmoji: { fontSize: 32, marginRight: 12 },
+  cardEmoji: { fontSize: 32, marginRight: 16 },
   cardInfo: { flex: 1 },
-  cardName: { fontSize: 16, fontWeight: '600', color: '#2C3435' },
-  cardStatus: { fontSize: 12, color: '#586162', marginTop: 2 },
+  cardName: { ...TYPOGRAPHY.titleMd, color: COLORS.onSurface },
+  cardStatus: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, marginTop: 4, textTransform: 'uppercase' },
   cardCounter: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: PRIMARY,
+    ...TYPOGRAPHY.displayLg,
+    color: COLORS.primary,
   },
 
   // Week dots
   weekDots: {
     flexDirection: 'row',
-    gap: 6,
-    marginTop: 12,
+    gap: 8,
+    marginTop: 20,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#E0E0E0',
+    width: 8,
+    height: 8,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.surfaceContainerLow,
   },
-  dotAchieved: { backgroundColor: PRIMARY },
-  dotNotAchieved: { backgroundColor: '#D68C7A' },
-  dotPending: { backgroundColor: '#B9DCD3' },
-  dotMissed: { backgroundColor: '#E0E0E0' },
+  dotAchieved: { backgroundColor: COLORS.primary },
+  dotNotAchieved: { backgroundColor: COLORS.tertiaryContainer },
+  dotPending: { backgroundColor: COLORS.primaryFixedDim },
+  dotMissed: { backgroundColor: COLORS.outlineVariant },
 
   // Empty state
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9F9',
+    backgroundColor: COLORS.background,
     padding: 32,
   },
-  emptyEmoji: { fontSize: 48, marginBottom: 16 },
-  emptyTitle: { fontSize: 22, fontWeight: '600', color: '#2C3435' },
+  emptyEmoji: { fontSize: 56, marginBottom: 24 },
+  emptyTitle: { ...TYPOGRAPHY.displaySm, textAlign: 'center', color: COLORS.onSurface, marginBottom: 8 },
   emptySubtext: {
-    fontSize: 14,
-    color: '#586162',
-    marginTop: 8,
+    ...TYPOGRAPHY.bodyLg,
+    color: COLORS.onSurfaceVariant,
     textAlign: 'center',
+    marginBottom: 32,
   },
   emptyButton: {
-    backgroundColor: PRIMARY,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginTop: 24,
+    paddingVertical: 16,
+    borderRadius: RADII.full,
+    ...SHADOWS.floating,
   },
-  emptyButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  emptyButtonText: { ...TYPOGRAPHY.bodyLg, color: COLORS.surfaceContainerHighest, fontWeight: '600' },
 
   // FAB
   fab: {
     position: 'absolute',
-    bottom: 32,
+    bottom: 96, // Increased from 32 to safely clear the tab bar layout
     right: 24,
-    width: 56,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 20,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: PRIMARY,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
+    ...SHADOWS.floating,
   },
-  fabText: { fontSize: 28, color: '#fff', marginTop: -2 },
+  fabText: { ...TYPOGRAPHY.bodyLg, color: COLORS.surfaceContainerHighest, fontWeight: '700' },
 });

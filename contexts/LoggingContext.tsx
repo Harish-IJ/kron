@@ -50,9 +50,11 @@ export function LoggingProvider({ children }: { children: React.ReactNode }) {
 // Separated into a different component so it doesn't cause context re-renders down the tree
 import { View, Text, StyleSheet, Pressable, TextInput, Image, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { BlurView } from 'expo-blur';
 import { useStreakContext } from './StreakContext';
 import * as streakService from '@/services/streakService';
 import * as mediaService from '@/services/mediaService';
+import { COLORS, TYPOGRAPHY, SHADOWS, RADII } from '@/constants/theme';
 
 function LoggingSheetRenderer({
   sheetRef,
@@ -136,6 +138,17 @@ function LoggingSheetRenderer({
     }
   };
 
+  // Custom glass background
+  const CustomBackground = useCallback(
+    ({ style }: { style: any }) => (
+      <BlurView
+        intensity={20}
+        tint="light"
+        style={[style, { overflow: 'hidden', borderRadius: 24, backgroundColor: 'rgba(248, 249, 249, 0.7)' }]}
+      />
+    ),
+  []);
+
   return (
     <BottomSheet
       ref={sheetRef}
@@ -144,7 +157,8 @@ function LoggingSheetRenderer({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       enablePanDownToClose
-      backgroundStyle={styles.sheetBackground}
+      backgroundComponent={CustomBackground}
+      handleIndicatorStyle={{ backgroundColor: COLORS.onSurfaceVariant }}
     >
       <View style={styles.contentContainer}>
         <Text style={styles.title}>
@@ -190,53 +204,47 @@ function LoggingSheetRenderer({
   );
 }
 
-const PRIMARY = '#45645E';
-
 const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: '#F8F9F9',
-  },
   contentContainer: {
     flex: 1,
-    padding: 24,
+    padding: 32,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#2C3435',
-    marginBottom: 20,
+    ...TYPOGRAPHY.displaySm,
+    color: COLORS.onSurface,
+    marginBottom: 24,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#586162',
-    marginTop: 16,
-    marginBottom: 8,
+    ...TYPOGRAPHY.labelSm,
+    color: COLORS.onSurfaceVariant,
+    marginTop: 24,
+    marginBottom: 12,
+    textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
     padding: 16,
-    height: 100,
+    height: 120,
     textAlignVertical: 'top',
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    ...TYPOGRAPHY.bodyLg,
+    color: COLORS.onSurface,
   },
   mediaPlaceholder: {
     height: 200,
-    backgroundColor: '#EBEBEB',
-    borderRadius: 16,
+    backgroundColor: COLORS.surfaceContainerLowest,
+    borderRadius: RADII.lg,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#D4D4D4',
+    borderWidth: 2,
+    borderColor: COLORS.surfaceContainerLow,
     borderStyle: 'dashed',
   },
   mediaPlaceholderFilled: {
     borderStyle: 'solid',
     borderColor: 'transparent',
+    backgroundColor: 'transparent',
   },
   mediaPreview: {
     width: '100%',
@@ -244,23 +252,24 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   mediaPlaceholderText: {
-    color: '#586162',
-    fontSize: 16,
+    ...TYPOGRAPHY.bodyLg,
+    color: COLORS.onSurfaceVariant,
     fontWeight: '500',
   },
   submitBtn: {
-    backgroundColor: PRIMARY,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 18,
+    borderRadius: RADII.full,
     alignItems: 'center',
     marginTop: 'auto',
+    ...SHADOWS.floating,
   },
   submitBtnDisabled: {
     opacity: 0.7,
   },
   submitText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    ...TYPOGRAPHY.bodyLg,
+    color: COLORS.surfaceContainerHighest,
+    fontWeight: '600',
   },
 });

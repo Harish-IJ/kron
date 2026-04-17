@@ -14,9 +14,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as streakService from '@/services/streakService';
 import { getStreakById } from '@/db/queries/streaks';
 import { useStreakContext } from '@/contexts/StreakContext';
+import { COLORS, TYPOGRAPHY, SHADOWS, RADII } from '@/constants/theme';
 import type { ScheduleType, ProofType, VisualizationType, Streak } from '@/db/types';
 
-const COLORS = ['#45645E', '#7BA1B0', '#D68C7A', '#3F6472', '#8B7355', '#6B5B73'];
+// Theming overrides for user-selected colors instead of default ones
+const USER_COLORS = ['#45645E', '#7BA1B0', '#D68C7A', '#3F6472', '#8B7355', '#6B5B73'];
 const EMOJIS = ['🏃', '✍️', '🧘', '💧', '📚', '🎨', '🎵', '💪', '🧠', '🌱'];
 
 export default function EditStreakScreen() {
@@ -30,7 +32,7 @@ export default function EditStreakScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [emoji, setEmoji] = useState('🔥');
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState(USER_COLORS[0]);
   const [scheduleType, setScheduleType] = useState<ScheduleType>('daily');
   const [proofType, setProofType] = useState<ProofType>('media');
   const [visualizationType, setVisualizationType] = useState<VisualizationType>('counter_dots');
@@ -45,7 +47,7 @@ export default function EditStreakScreen() {
             setName(fetchedStreak.name);
             setDescription(fetchedStreak.description || '');
             setEmoji(fetchedStreak.emoji || '🔥');
-            setColor(fetchedStreak.color || COLORS[0]);
+            setColor(fetchedStreak.color || USER_COLORS[0]);
             setScheduleType(fetchedStreak.scheduleType);
             setProofType(fetchedStreak.proofType);
             setVisualizationType(fetchedStreak.visualizationType || 'counter_dots');
@@ -99,7 +101,7 @@ export default function EditStreakScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={PRIMARY} size="large" />
+        <ActivityIndicator color={COLORS.primary} size="large" />
       </View>
     );
   }
@@ -147,7 +149,7 @@ export default function EditStreakScreen() {
       {/* Color */}
       <Text style={styles.label}>Color</Text>
       <View style={styles.chipRow}>
-        {COLORS.map((c) => (
+        {USER_COLORS.map((c) => (
           <Pressable
             key={c}
             style={[
@@ -251,71 +253,70 @@ export default function EditStreakScreen() {
   );
 }
 
-const PRIMARY = '#45645E';
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F9' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 24, paddingBottom: 60 },
+  content: { padding: 32, paddingBottom: 60 },
 
-  title: { fontSize: 24, fontWeight: '700', color: '#2C3435', marginTop: 8 },
-  subtitle: { fontSize: 14, color: '#586162', marginTop: 4, marginBottom: 24 },
+  title: { ...TYPOGRAPHY.displaySm, color: COLORS.onSurface, marginTop: 8 },
+  subtitle: { ...TYPOGRAPHY.bodyLg, color: COLORS.onSurfaceVariant, marginTop: 4, marginBottom: 32 },
 
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#586162',
-    marginBottom: 8,
-    marginTop: 16,
+    ...TYPOGRAPHY.labelSm,
+    color: COLORS.onSurfaceVariant,
+    marginBottom: 12,
+    marginTop: 24,
+    textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#2C3435',
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    ...TYPOGRAPHY.bodyLg,
+    color: COLORS.onSurface,
   },
-  textArea: { height: 80, textAlignVertical: 'top' },
+  textArea: { height: 100, textAlignVertical: 'top' },
 
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.surfaceContainerHighest,
   },
-  chipActive: { backgroundColor: PRIMARY },
-  chipText: { fontSize: 13, color: '#586162' },
-  chipTextActive: { color: '#fff' },
+  chipActive: { backgroundColor: COLORS.primary },
+  chipText: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, fontWeight: '500' },
+  chipTextActive: { color: COLORS.surfaceContainerHighest },
 
   emojiChip: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    width: 48,
+    height: 48,
+    borderRadius: RADII.lg,
+    backgroundColor: COLORS.surfaceContainerHighest,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  chipSelected: { backgroundColor: '#E8F5E9' },
-  emojiText: { fontSize: 20 },
+  chipSelected: { backgroundColor: COLORS.primaryContainer },
+  emojiText: { fontSize: 24 },
 
   colorChip: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: RADII.full,
   },
   colorSelected: {
     borderWidth: 3,
-    borderColor: '#2C3435',
+    borderColor: COLORS.onSurface,
   },
 
   createButton: {
-    backgroundColor: PRIMARY,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 18,
+    borderRadius: RADII.full,
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 48,
+    ...SHADOWS.floating,
   },
-  createButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  createButtonText: { ...TYPOGRAPHY.bodyLg, color: COLORS.surfaceContainerHighest, fontWeight: '600' },
 });

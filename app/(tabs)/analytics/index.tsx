@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 import { useStreaks } from '@/hooks/useStreaks';
+import { COLORS, TYPOGRAPHY, SHADOWS, RADII } from '@/constants/theme';
 
 export default function AnalyticsScreen() {
   const { streaks, isLoading } = useStreaks();
@@ -21,7 +22,7 @@ export default function AnalyticsScreen() {
   streaks.forEach((item) => {
     item.weekSummary.forEach(day => {
       if (day.dayStatus === 'achieved') {
-         markedDates[day.date] = { marked: true, dotColor: PRIMARY };
+         markedDates[day.date] = { marked: true, dotColor: COLORS.primary };
       }
     });
   });
@@ -76,9 +77,12 @@ export default function AnalyticsScreen() {
           <Calendar
             markedDates={markedDates}
             theme={{
-              arrowColor: PRIMARY,
-              todayTextColor: PRIMARY,
-              dotColor: PRIMARY
+              arrowColor: COLORS.primary,
+              todayTextColor: COLORS.primary,
+              dotColor: COLORS.primary,
+              textDayFontFamily: 'Inter_400Regular',
+              textMonthFontFamily: 'Inter_600SemiBold',
+              textDayHeaderFontFamily: 'Inter_500Medium',
             }}
           />
         </View>
@@ -87,52 +91,49 @@ export default function AnalyticsScreen() {
   );
 }
 
-const PRIMARY = '#45645E';
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9F9' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  mutedText: { color: '#586162', fontSize: 14 },
+  mutedText: { ...TYPOGRAPHY.bodyLg, color: COLORS.onSurfaceVariant },
 
   header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16 },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: '#2C3435' },
+  headerTitle: { ...TYPOGRAPHY.displaySm, color: COLORS.onSurface },
 
   content: { padding: 16, paddingBottom: 100 },
 
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  statsRow: { flexDirection: 'row', gap: 16, marginBottom: 24 },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
     padding: 16,
     alignItems: 'center',
   },
-  statValue: { fontSize: 28, fontWeight: '700', color: PRIMARY },
-  statLabel: { fontSize: 12, color: '#586162', marginTop: 4 },
+  statValue: { ...TYPOGRAPHY.displaySm, color: COLORS.primary },
+  statLabel: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, marginTop: 4, textTransform: 'uppercase' },
 
   streakStat: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.md,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  statEmoji: { fontSize: 24, marginRight: 12 },
+  statEmoji: { fontSize: 32, marginRight: 16 },
   statInfo: { flex: 1 },
-  statName: { fontSize: 14, fontWeight: '600', color: '#2C3435' },
-  statDetail: { fontSize: 12, color: '#586162', marginTop: 2 },
+  statName: { ...TYPOGRAPHY.titleMd, color: COLORS.onSurface },
+  statDetail: { ...TYPOGRAPHY.bodySm, color: COLORS.onSurfaceVariant, marginTop: 4 },
 
   placeholder: {
     marginTop: 24,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    padding: 24,
+    backgroundColor: COLORS.surfaceContainerHighest,
+    borderRadius: RADII.lg,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#2C3435',
-    marginBottom: 12,
+    ...TYPOGRAPHY.titleSm,
+    color: COLORS.onSurface,
+    marginBottom: 16,
   }
 });
