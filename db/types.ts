@@ -169,6 +169,7 @@ export interface CreateLogInput {
   logDate?: string; // defaults to today
   status: LogStatus;
   note?: string;
+  mediaPaths?: string[]; // Added in Phase 6: support associating media with a log
 }
 
 export interface CreateLogMediaInput {

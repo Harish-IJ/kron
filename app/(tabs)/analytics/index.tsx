@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 
 import { useStreaks } from '@/hooks/useStreaks';
 
@@ -13,6 +14,17 @@ export default function AnalyticsScreen() {
       </View>
     );
   }
+
+  // Aggregate active days globally across all streaks for a simple heatmap
+  // Real heatmap requires deeper querying, doing naive implementation by showing activity marks.
+  const markedDates: any = {};
+  streaks.forEach((item) => {
+    item.weekSummary.forEach(day => {
+      if (day.dayStatus === 'achieved') {
+         markedDates[day.date] = { marked: true, dotColor: PRIMARY };
+      }
+    });
+  });
 
   return (
     <View style={styles.container}>
@@ -58,9 +70,17 @@ export default function AnalyticsScreen() {
           </View>
         ))}
 
-        {/* Placeholder for calendar heatmap */}
+        {/* Calendar heatmap */}
         <View style={styles.placeholder}>
-          <Text style={styles.mutedText}>📊 Calendar heatmap coming in Phase 6</Text>
+          <Text style={styles.sectionTitle}>Global Activity Heatmap</Text>
+          <Calendar
+            markedDates={markedDates}
+            theme={{
+              arrowColor: PRIMARY,
+              todayTextColor: PRIMARY,
+              dotColor: PRIMARY
+            }}
+          />
         </View>
       </ScrollView>
     </View>
@@ -105,9 +125,14 @@ const styles = StyleSheet.create({
 
   placeholder: {
     marginTop: 24,
-    padding: 32,
-    alignItems: 'center',
+    padding: 16,
     backgroundColor: '#fff',
     borderRadius: 12,
   },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C3435',
+    marginBottom: 12,
+  }
 });

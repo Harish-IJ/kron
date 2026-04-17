@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { useStreak } from '@/hooks/useStreak';
 import { useStreakContext } from '@/contexts/StreakContext';
+import { useLoggingContext } from '@/contexts/LoggingContext';
 import * as streakService from '@/services/streakService';
 
 export default function StreakDetailScreen() {
@@ -37,23 +38,10 @@ export default function StreakDetailScreen() {
     );
   }
 
-  const handleLogProof = async () => {
-    // Phase 6: bottom sheet. For now, quick-log with achieved status.
-    try {
-      await streakService.createLog({
-        streakId: streak.id,
-        status: 'achieved',
-        note: 'Quick log from detail screen',
-      });
-      await refresh();
-      await refreshDashboard();
-      Alert.alert('Logged ✅');
-    } catch (err) {
-      Alert.alert(
-        'Error',
-        err instanceof Error ? err.message : 'Failed to log'
-      );
-    }
+  const { openLoggingSheet } = useLoggingContext();
+
+  const handleLogProof = () => {
+    openLoggingSheet(streak.id, streak.proofType);
   };
 
   const handlePause = async () => {

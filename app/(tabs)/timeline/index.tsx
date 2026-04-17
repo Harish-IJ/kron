@@ -4,16 +4,34 @@ import { useRouter } from 'expo-router';
 
 import { useTimeline } from '@/hooks/useTimeline';
 import { addDays, today } from '@/db/helpers';
+import { useState } from 'react';
+import { Calendar } from 'react-native-calendars';
 
 export default function TimelineScreen() {
   const router = useRouter();
   const { entries, isLoading, selectedDate, setDate, refresh } = useTimeline();
+
+  const [viewMode, setViewMode] = useState<'daily'|'monthly'>('daily');
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Timeline</Text>
+        <View style={styles.toggleRow}>
+          <Pressable 
+            style={[styles.toggleBtn, viewMode === 'daily' && styles.toggleActive]} 
+            onPress={() => setViewMode('daily')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'daily' && styles.toggleTextActive]}>Daily</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.toggleBtn, viewMode === 'monthly' && styles.toggleActive]} 
+            onPress={() => setViewMode('monthly')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'monthly' && styles.toggleTextActive]}>Monthly</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Date Navigation */}
@@ -47,8 +65,25 @@ export default function TimelineScreen() {
         </Pressable>
       </View>
 
-      {/* Entries */}
-      {isLoading ? (
+      {/* Content */}
+      {viewMode === 'monthly' ? (
+        <View style={styles.calendarContainer}>
+          <Calendar
+            current={selectedDate}
+            onDayPress={(day: any) => {
+              setDate(day.dateString);
+              setViewMode('daily');
+            }}
+            markedDates={{
+              [selectedDate]: { selected: true, selectedColor: PRIMARY }
+            }}
+            theme={{
+              todayTextColor: PRIMARY,
+              arrowColor: PRIMARY,
+            }}
+          />
+        </View>
+      ) : isLoading ? (
         <View style={styles.centered}>
           <Text style={styles.mutedText}>Loading…</Text>
         </View>
@@ -102,8 +137,15 @@ const styles = StyleSheet.create({
   mutedText: { color: '#586162', fontSize: 14 },
   emptyEmoji: { fontSize: 32, marginBottom: 8 },
 
-  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 8 },
+  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { fontSize: 28, fontWeight: '700', color: '#2C3435' },
+  toggleRow: { flexDirection: 'row', backgroundColor: '#E0E0E0', borderRadius: 8, padding: 2 },
+  toggleBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+  toggleActive: { backgroundColor: '#fff' },
+  toggleText: { fontSize: 12, fontWeight: '600', color: '#586162' },
+  toggleTextActive: { color: PRIMARY },
+
+  calendarContainer: { padding: 16, backgroundColor: '#fff', margin: 16, borderRadius: 12 },
 
   dateNav: {
     flexDirection: 'row',

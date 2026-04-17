@@ -73,6 +73,18 @@ export async function createLog(input: CreateLogInput): Promise<Log> {
     now
   );
 
+  // Added in Phase 6: Support inserting media refs
+  if (input.mediaPaths && input.mediaPaths.length > 0) {
+    for (const filePath of input.mediaPaths) {
+      // Re-use existing createLogMedia function below
+      await createLogMedia({
+        logId: id,
+        mediaType: filePath.endsWith('.mp4') ? 'video' : 'image',
+        filePath,
+      });
+    }
+  }
+
   return (await getLogById(id))!;
 }
 
