@@ -52,7 +52,8 @@ export function LoggingProvider({ children }: { children: React.ReactNode }) {
 }
 
 // Separated into a different component so it doesn't cause context re-renders down the tree
-import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, ImageBackground, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, ImageBackground, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -72,7 +73,7 @@ function LoggingSheetRenderer({
 }) {
   const { streakCards, refresh } = useStreakContext();
   const [note, setNote] = useState('');
-  const [mediaUri, setMediaUri] = useState<string | null>(null);
+  const [mediaUris, setMediaUris] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<'achieved' | 'not_achieved'>('achieved');
   const [selectedStreakId, setSelectedStreakId] = useState<string | null>(null);
@@ -91,7 +92,7 @@ function LoggingSheetRenderer({
     (index: number) => {
       if (index === -1) {
         setNote('');
-        setMediaUri(null);
+        setMediaUris([]);
         setIsSubmitting(false);
         setStatus('achieved');
       }
@@ -105,7 +106,12 @@ function LoggingSheetRenderer({
     ),
     []
   );
+  
   const handlePickMedia = async () => {
+    if (mediaUris.length >= 3) {
+      alert("Maximum of 3 images allowed per ritual log.");
+      return;
+    }
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       if (!permissionResult.granted) {
@@ -125,10 +131,35 @@ function LoggingSheetRenderer({
         // Save immediately to internal storage as requested
         const savedUri = await mediaService.saveMediaItem(pickedUri);
         console.log('[Kron] Saved internal URI for preview:', savedUri);
-        setMediaUri(savedUri);
+        setMediaUris(prev => [...prev, savedUri]);
       }
     } catch (err) {
       console.error('[Kron] Camera error:', err);
+    }
+  };
+
+  const handlePickGallery = async () => {
+    if (mediaUris.length >= 3) {
+      alert("Maximum of 3 images allowed per ritual log.");
+      return;
+    }
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images', 'videos'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const pickedUri = result.assets[0].uri;
+        console.log('[Kron] Picked Library URI:', pickedUri);
+        
+        const savedUri = await mediaService.saveMediaItem(pickedUri);
+        console.log('[Kron] Saved internal URI for preview:', savedUri);
+        setMediaUris(prev => [...prev, savedUri]);
+      }
+    } catch (err) {
+      console.error('[Kron] Gallery error:', err);
     }
   };
 
@@ -137,13 +168,11 @@ function LoggingSheetRenderer({
     setIsSubmitting(true);
 
     try {
-      let finalMediaUri = mediaUri;
-
       await streakService.createLog({
         streakId: selectedStreakId,
         status: status,
         note: note.trim() || undefined,
-        mediaPaths: finalMediaUri ? [finalMediaUri] : undefined 
+        mediaPaths: mediaUris.length > 0 ? mediaUris : undefined 
       });
 
       await refresh();
@@ -189,7 +218,7 @@ function LoggingSheetRenderer({
         </View>
 
         {/* Streak Selector Popup */}
-        <View style={{ marginBottom: 24 }}>
+        <View style={{ marginBottom: 24, zIndex: 999 }}>
           <Pressable 
             onPress={() => setIsPickerOpen(!isPickerOpen)}
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: COLORS.surfaceContainerLow, borderRadius: RADII.lg, borderWidth: 1, borderColor: isPickerOpen ? COLORS.primary : 'transparent' }}
@@ -203,21 +232,23 @@ function LoggingSheetRenderer({
           </Pressable>
 
           {isPickerOpen && (
-            <View style={{ marginTop: 8, backgroundColor: COLORS.surfaceContainerLowest, borderRadius: RADII.lg, borderWidth: 1, borderColor: COLORS.surfaceContainerLow, overflow: 'hidden' }}>
-              {streakCards.map(s => (
-                <Pressable 
-                  key={s.streak.id}
-                  onPress={() => {
-                    setSelectedStreakId(s.streak.id);
-                    setIsPickerOpen(false);
-                  }}
-                  style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceContainerLow, backgroundColor: selectedStreakId === s.streak.id ? COLORS.primaryContainer : 'transparent' }}
-                >
-                  <Text style={{ fontSize: 16, color: selectedStreakId === s.streak.id ? COLORS.onPrimaryContainer : COLORS.onSurface, fontWeight: selectedStreakId === s.streak.id ? '600' : '400' }}>
-                    {s.streak.emoji}  {s.streak.name}
-                  </Text>
-                </Pressable>
-              ))}
+            <View style={{ position: 'absolute', top: 64, left: 0, right: 0, maxHeight: 200, backgroundColor: COLORS.surfaceContainerLowest, borderRadius: RADII.lg, borderWidth: 1, borderColor: COLORS.surfaceContainerLow, zIndex: 1000, elevation: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 4 }, shadowRadius: 10, overflow: 'hidden' }}>
+              <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={true}>
+                {streakCards.map(s => (
+                  <Pressable 
+                    key={s.streak.id}
+                    onPress={() => {
+                      setSelectedStreakId(s.streak.id);
+                      setIsPickerOpen(false);
+                    }}
+                    style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceContainerLow, backgroundColor: selectedStreakId === s.streak.id ? COLORS.primaryContainer : 'transparent' }}
+                  >
+                    <Text style={{ fontSize: 16, color: selectedStreakId === s.streak.id ? COLORS.onPrimaryContainer : COLORS.onSurface, fontWeight: selectedStreakId === s.streak.id ? '600' : '400' }}>
+                      {s.streak.emoji}  {s.streak.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
           )}
         </View>
@@ -234,30 +265,52 @@ function LoggingSheetRenderer({
           </View>
         </View>
 
-        {/* Camera action */}
-        <View style={[styles.mediaSection, { borderWidth: 2, borderColor: 'blue' }]}>
-           {mediaUri ? (
-              <Pressable 
-                onPress={handlePickMedia} 
-                style={[styles.mediaPreviewFull, { width: Dimensions.get('window').width - 48, height: 300, backgroundColor: 'green', borderWidth: 5, borderColor: 'red' }]}
-              >
-                <Image 
-                  key={mediaUri}
-                  source={{ uri: mediaUri }} 
-                  style={{ width: '100%', height: '100%' }} 
-                  resizeMode="cover"
-                  onLoad={() => console.log('[Kron] Preview Image component LOADED')}
-                  onError={(e) => console.log('[Kron] Preview Image component ERROR:', e.nativeEvent.error)}
-                />
+        {/* Camera action & Grid */}
+        <View style={styles.mediaSection}>
+           <Pressable onPress={handlePickMedia} style={styles.cameraBox}>
+             <View style={styles.cameraIconWrap}>
+               <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
+             </View>
+             <Text style={styles.cameraText}>Open Camera</Text>
+           </Pressable>
+
+           {/* Asymmetric Editorial Grid */}
+           <View style={{ flexDirection: 'row', height: 96, gap: 12, marginTop: 16 }}>
+             
+             {/* Captured Photos */}
+             {mediaUris.map((uri, index) => (
+                <View key={uri} style={{ flex: 1, backgroundColor: COLORS.surfaceContainerHigh, borderRadius: RADII.md, overflow: 'hidden', position: 'relative' }}>
+                   <Image 
+                     source={{ uri }} 
+                     style={StyleSheet.absoluteFillObject} 
+                     contentFit="cover" 
+                   />
+                   <Pressable 
+                     onPress={() => setMediaUris(prev => prev.filter(u => u !== uri))}
+                     style={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, padding: 4 }}
+                   >
+                     <MaterialIcons name="close" size={12} color="#FFF" />
+                   </Pressable>
+                </View>
+             ))}
+
+             {/* Dynamic Empty Placeholders (ensure we always have slots visually) */}
+             {Array.from({ length: Math.max(0, 3 - mediaUris.length) }).map((_, idx) => (
+                <View key={`placeholder-${idx}`} style={{ flex: 1, backgroundColor: COLORS.surfaceContainerHigh, borderRadius: RADII.md }} />
+             ))}
+
+             {/* Tertiary Add Media Action Area */}
+             <Pressable 
+               onPress={handlePickGallery}
+               style={{ flex: 1, backgroundColor: COLORS.surfaceContainerLow, borderRadius: RADII.md, borderWidth: 1, borderColor: 'rgba(171, 180, 181, 0.1)', justifyContent: 'center', alignItems: 'center', flexDirection: 'row', opacity: mediaUris.length >= 3 ? 0.5 : 1 }}
+               disabled={mediaUris.length >= 3}
+             >
+                {mediaUris.length < 3 && <MaterialIcons name="add" size={16} color={COLORS.onSurfaceVariant} style={{ marginRight: 4 }} />}
+                <Text style={{ fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', color: COLORS.onSurfaceVariant }}>
+                  {mediaUris.length >= 3 ? 'Max' : 'Media'}
+                </Text>
              </Pressable>
-           ) : (
-             <Pressable onPress={handlePickMedia} style={styles.cameraBox}>
-               <View style={styles.cameraIconWrap}>
-                 <MaterialIcons name="photo-camera" size={32} color={COLORS.primary} />
-               </View>
-               <Text style={styles.cameraText}>Open Camera</Text>
-             </Pressable>
-           )}
+           </View>
         </View>
 
         {/* Notes */}
@@ -304,10 +357,10 @@ const styles = StyleSheet.create({
   toggleContainer: { flexDirection: 'row', backgroundColor: COLORS.surfaceContainerLow, borderRadius: RADII.full, padding: 4 },
   toggleBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: RADII.full, backgroundColor: 'transparent' },
   toggleBtnActiveA: { backgroundColor: COLORS.primary },
-  toggleBtnActiveN: { backgroundColor: COLORS.surfaceContainerHighest },
+  toggleBtnActiveN: { backgroundColor: COLORS.tertiary },
   toggleBtnText: { ...TYPOGRAPHY.labelSm, color: COLORS.onSurfaceVariant, fontWeight: '600' },
   toggleBtnTextActive: { color: COLORS.onPrimary },
-  toggleBtnTextActiveN: { color: COLORS.onSurface },
+  toggleBtnTextActiveN: { color: '#FFFFFF' },
 
   mediaSection: { marginBottom: 24 },
   cameraBox: { width: '100%', alignItems: 'center', gap: 12, paddingVertical: 48, borderRadius: RADII.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(171, 180, 181, 0.3)', backgroundColor: COLORS.surfaceContainerLowest },
