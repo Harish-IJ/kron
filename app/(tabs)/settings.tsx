@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, TextInput, StyleSheet, Alert } from 'react-native';
 import { useStreak } from '../../src/hooks/use-streak';
 import { useLogs } from '../../src/hooks/use-logs';
@@ -14,19 +14,29 @@ import type { IntervalType } from '../../src/domain/types';
 
 export default function SettingsScreen() {
   const { streak, saveStreak, resetAll } = useStreak();
-  const { logs } = useLogs();
+  const { logs, load: reloadLogs } = useLogs();
 
   const [title, setTitle] = useState(streak?.title ?? '');
   const [intervalType, setIntervalType] = useState<IntervalType>(streak?.intervalType ?? 'daily');
   const [intervalDays, setIntervalDays] = useState(streak?.intervalDays ?? 1);
+  const [intervalWeekdays, setIntervalWeekdays] = useState<number[]>(streak?.intervalWeekdays ?? []);
+  const [intervalMonthDates, setIntervalMonthDates] = useState<number[]>(streak?.intervalMonthDates ?? []);
   const [saving, setSaving] = useState(false);
   const hasLogs = logs.length > 0;
+
+  useEffect(() => {
+    setTitle(streak?.title ?? '');
+    setIntervalType(streak?.intervalType ?? 'daily');
+    setIntervalDays(streak?.intervalDays ?? 1);
+    setIntervalWeekdays(streak?.intervalWeekdays ?? []);
+    setIntervalMonthDates(streak?.intervalMonthDates ?? []);
+  }, [streak]);
 
   const handleSave = async () => {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      await saveStreak({ title: title.trim(), intervalType, intervalDays, notificationTimes: streak?.notificationTimes ?? [] });
+      await saveStreak({ title: title.trim(), intervalType, intervalDays, intervalWeekdays, intervalMonthDates, notificationTimes: streak?.notificationTimes ?? [] });
     } finally {
       setSaving(false);
     }
@@ -39,7 +49,7 @@ export default function SettingsScreen() {
         text: 'Reset', style: 'destructive',
         onPress: () => Alert.alert('Are you absolutely sure?', 'All data will be lost forever.', [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Yes, Reset Everything', style: 'destructive', onPress: resetAll },
+          { text: 'Yes, Reset Everything', style: 'destructive', onPress: async () => { await resetAll(); await reloadLogs(); } },
         ]),
       },
     ]);
@@ -65,8 +75,15 @@ export default function SettingsScreen() {
             <IntervalSelector
               intervalType={intervalType}
               intervalDays={intervalDays}
+              intervalWeekdays={intervalWeekdays}
+              intervalMonthDates={intervalMonthDates}
               disabled={hasLogs}
-              onChange={(t, d) => { setIntervalType(t); setIntervalDays(d); }}
+              onChange={(t, d, wd, md) => {
+                setIntervalType(t);
+                setIntervalDays(d);
+                setIntervalWeekdays(wd);
+                setIntervalMonthDates(md);
+              }}
             />
             {hasLogs && (
               <Typography variant="caption" color={`${colors.orange}CC`} style={{ marginTop: space[2] }}>

@@ -1,28 +1,47 @@
 import * as Notifications from 'expo-notifications';
 import type { Streak, StreakState } from '../domain/types';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// expo-notifications push token support was removed from Expo Go in SDK 53.
+// The handler and all scheduling calls are wrapped so the app degrades
+// gracefully when running in Expo Go.
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {
+  // Expo Go — local notifications unavailable
+}
 
 export async function requestNotificationPermission(): Promise<boolean> {
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
 }
 
 export async function isNotificationPermissionGranted(): Promise<boolean> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return status === 'granted';
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
+  }
 }
 
 export async function cancelAllNotifications(): Promise<void> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch {
+    // noop in Expo Go
+  }
 }
 
 function parseHHMM(hhmm: string): { hours: number; minutes: number } {
@@ -43,6 +62,7 @@ export async function syncNotifications(
   streak: Streak,
   streakState: StreakState
 ): Promise<void> {
+  try {
   await cancelAllNotifications();
 
   if (streak.notificationTimes.length === 0) return;
@@ -103,5 +123,8 @@ export async function syncNotifications(
         scheduled++;
       }
     }
+  }
+  } catch {
+    // Expo Go — local notifications unavailable
   }
 }

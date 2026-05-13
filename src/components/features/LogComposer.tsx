@@ -51,6 +51,8 @@ export function LogComposer({ initial, existingTimestamp, onSave, onCancel }: Lo
           onChangeText={setTitle}
           placeholder="LOG TITLE"
           placeholderTextColor={`${colors.ink}40`}
+          autoCapitalize="none"
+          autoCorrect={false}
           autoFocus
         />
         <TextInput
@@ -98,7 +100,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1, backgroundColor: colors.base },
   content: { padding: space[5] },
-  titleInput: { fontFamily: 'Inter-Bold', fontSize: 16, fontWeight: '700', color: colors.ink, borderBottomWidth: 1, borderBottomColor: colors.ink, paddingVertical: space[3], marginBottom: space[5], letterSpacing: 1.4, textTransform: 'uppercase' },
+  titleInput: { fontFamily: 'Inter-Bold', fontSize: 16, fontWeight: '700', color: colors.ink, borderBottomWidth: 1, borderBottomColor: colors.ink, paddingVertical: space[3], marginBottom: space[5] },
   descInput: { fontFamily: 'JetBrainsMono-Regular', fontSize: 12, color: colors.ink, borderWidth: 1, borderColor: colors.ink, padding: space[4], minHeight: 96, textAlignVertical: 'top', marginBottom: space[5] },
   section: { marginBottom: space[5] },
   sectionLabel: { marginBottom: space[2] },
