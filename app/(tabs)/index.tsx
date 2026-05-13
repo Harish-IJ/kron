@@ -22,7 +22,7 @@ export default function HomeScreen() {
         headline="NO STREAK"
         subtext="Configure your practice in Settings."
         actionLabel="GO TO SETTINGS"
-        onAction={() => router.push('/(tabs)/settings')}
+        onAction={() => router.push('/(tabs)/settings' as any)}
       />
     );
   }
@@ -32,7 +32,7 @@ export default function HomeScreen() {
       <HeroStreakCard streak={streak} streakState={streakState} />
       <DeadlineCard streakState={streakState} />
       {analytics && <MiniHeatmap cells={analytics.heatmapData} />}
-      <PrimaryButton label="LOG TODAY" onPress={() => router.push('/log/new')} style={styles.cta} />
+      <PrimaryButton label="LOG TODAY" onPress={() => router.push('/log/new' as any)} style={styles.cta} />
     </ScrollView>
   );
 }

@@ -14,7 +14,7 @@ export default function FeedScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => router.push('/log/new')} hitSlop={8} style={{ marginRight: 16 }}>
+        <Pressable onPress={() => router.push('/log/new' as any)} hitSlop={8} style={{ marginRight: 16 }}>
           <Icon name="plus" size={22} color={colors.ink} />
         </Pressable>
       ),
@@ -29,7 +29,7 @@ export default function FeedScreen() {
         headline="NO ENTRIES YET"
         subtext="Your logs will appear here."
         actionLabel="LOG TODAY"
-        onAction={() => router.push('/log/new')}
+        onAction={() => router.push('/log/new' as any)}
       />
     );
   }
@@ -41,7 +41,7 @@ export default function FeedScreen() {
       renderItem={({ item }) => (
         <FeedLogCard
           log={item}
-          onEdit={id => router.push(`/log/${id}`)}
+          onEdit={id => router.push(`/log/${id}` as any)}
           onDelete={deleteLog}
         />
       )}

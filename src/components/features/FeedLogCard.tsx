@@ -57,7 +57,7 @@ export function FeedLogCard({ log, bucketLabel, onEdit, onDelete }: FeedLogCardP
               source={{ uri: getAbsolutePath(log.mediaPath) }}
               style={styles.media}
               contentFit="cover"
-              placeholder={{ backgroundColor: colors.navy }}
+              placeholder={null}
             />
           )}
           {log.description ? (

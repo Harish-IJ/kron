@@ -18,6 +18,8 @@ export interface AnalyticsResult {
   consistencyScore: number;
   currentStreak: number;
   longestStreak: number;
+  completedBuckets: number;
+  totalBuckets: number;
   streakHistory: StreakRun[];
   heatmapData: HeatmapCell[];
   weekdayPattern: number[];
@@ -97,6 +99,8 @@ export function computeAnalytics(
     consistencyScore: completionPercent,
     currentStreak,
     longestStreak,
+    completedBuckets,
+    totalBuckets,
     streakHistory,
     heatmapData,
     weekdayPattern,

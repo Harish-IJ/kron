@@ -8,13 +8,14 @@ import type { CreateLogInput } from '../../src/domain/types';
 export default function NewLogModal() {
   const { create } = useLogs();
 
-  const handleSave = async (data: CreateLogInput) => {
-    let mediaPath: string | null = data.mediaPath ?? null;
+  const handleSave = async (data: CreateLogInput | import('../../src/domain/types').LogPatch) => {
+    const input = data as CreateLogInput;
+    let mediaPath: string | null = input.mediaPath ?? null;
     if (mediaPath && !mediaPath.startsWith('media/')) {
       const tempId = `new_${Date.now()}`;
       mediaPath = await saveImage(mediaPath, tempId);
     }
-    await create({ ...data, mediaPath, mediaType: mediaPath ? 'image' : null });
+    await create({ ...input, mediaPath, mediaType: mediaPath ? 'image' : null });
     router.back();
   };
 
