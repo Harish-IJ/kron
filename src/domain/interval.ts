@@ -49,3 +49,60 @@ export function getCurrentBucketIndex(
   const localToday = toLocalDateString(asOf);
   return getBucketIndex(startDate, localToday, intervalDays);
 }
+
+// Returns every date from startDate..asOf that falls on one of the selected weekdays.
+// weekdays: 0=Mon, 1=Tue, ..., 6=Sun
+export function getScheduledWeekdayDates(
+  startDate: string,
+  weekdays: number[],
+  asOf: Date
+): string[] {
+  if (weekdays.length === 0) return [];
+  // Map 0=Mon..6=Sun to JS getDay() values (0=Sun..6=Sat)
+  const jsWeekdays = weekdays.map(d => (d + 1) % 7);
+  const today = new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate());
+  const result: string[] = [];
+  const d = parseLocalDate(startDate);
+  while (d <= today) {
+    if (jsWeekdays.includes(d.getDay())) {
+      result.push(toLocalDateString(d));
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return result;
+}
+
+// Returns every occurrence of the selected month-dates from startDate..asOf.
+// monthDates: 1-31; invalid dates for a given month (e.g. Feb 30) are skipped.
+export function getScheduledMonthDates(
+  startDate: string,
+  monthDates: number[],
+  asOf: Date
+): string[] {
+  if (monthDates.length === 0) return [];
+  const today = toLocalDateString(asOf);
+  const sorted = [...monthDates].sort((a, b) => a - b);
+  const result: string[] = [];
+  const start = parseLocalDate(startDate);
+  let year = start.getFullYear();
+  let month = start.getMonth(); // 0-indexed
+
+  while (true) {
+    const firstOfMonth = toLocalDateString(new Date(year, month, 1));
+    if (firstOfMonth > today) break;
+
+    for (const d of sorted) {
+      const date = new Date(year, month, d);
+      if (date.getDate() !== d) continue; // invalid date (e.g. Feb 30)
+      const dateStr = toLocalDateString(date);
+      if (dateStr < startDate) continue;
+      if (dateStr > today) continue;
+      result.push(dateStr);
+    }
+
+    month++;
+    if (month > 11) { month = 0; year++; }
+  }
+
+  return result;
+}

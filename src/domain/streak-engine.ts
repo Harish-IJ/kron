@@ -4,13 +4,40 @@ import {
   getBucketBounds,
   getCurrentBucketIndex,
   toLocalDateString,
+  getScheduledWeekdayDates,
+  getScheduledMonthDates,
 } from './interval';
+
+function computeDateListBuckets(logs: Log[], dates: string[]): IntervalBucket[] {
+  if (dates.length === 0) {
+    const today = toLocalDateString(new Date());
+    return [{ index: 0, startDate: today, endDate: today, completed: false, logCount: 0 }];
+  }
+  const logsByDate = new Map<string, number>();
+  for (const log of logs) {
+    const dateStr = toLocalDateString(new Date(log.createdAt));
+    logsByDate.set(dateStr, (logsByDate.get(dateStr) ?? 0) + 1);
+  }
+  return dates.map((dateStr, idx) => {
+    const count = logsByDate.get(dateStr) ?? 0;
+    return { index: idx, startDate: dateStr, endDate: dateStr, completed: count > 0, logCount: count };
+  });
+}
 
 export function computeBuckets(
   streak: Streak,
   logs: Log[],
   asOf: Date
 ): IntervalBucket[] {
+  if (streak.intervalType === 'weekly_on_days') {
+    const dates = getScheduledWeekdayDates(streak.startDate, streak.intervalWeekdays ?? [], asOf);
+    return computeDateListBuckets(logs, dates);
+  }
+  if (streak.intervalType === 'monthly_on_dates') {
+    const dates = getScheduledMonthDates(streak.startDate, streak.intervalMonthDates ?? [], asOf);
+    return computeDateListBuckets(logs, dates);
+  }
+
   const currentIdx = getCurrentBucketIndex(streak.startDate, streak.intervalDays, asOf);
 
   const bucketLogCounts = new Map<number, number>();

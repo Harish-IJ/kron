@@ -9,6 +9,8 @@ function rowToStreak(row: StreakRow): Streak {
     title: row.title,
     intervalType: row.interval_type as IntervalType,
     intervalDays: row.interval_days,
+    intervalWeekdays: row.interval_weekdays ? JSON.parse(row.interval_weekdays) as number[] : [],
+    intervalMonthDates: row.interval_month_dates ? JSON.parse(row.interval_month_dates) as number[] : [],
     notificationTimes: JSON.parse(row.notification_times) as string[],
     startDate: row.start_date,
     createdAt: row.created_at,
@@ -27,14 +29,17 @@ export async function upsertStreak(data: StreakFormData): Promise<Streak> {
   const now = new Date().toISOString();
   const startDate = existing?.startDate ?? toLocalDateString(new Date());
 
+  const weekdaysJson = data.intervalWeekdays?.length ? JSON.stringify(data.intervalWeekdays) : null;
+  const monthDatesJson = data.intervalMonthDates?.length ? JSON.stringify(data.intervalMonthDates) : null;
+
   await db.runAsync(
-    `INSERT INTO streak (id, title, interval_type, interval_days, notification_times, start_date, created_at)
-     VALUES ('singleton', ?, ?, ?, ?, ?, ?)
+    `INSERT INTO streak (id, title, interval_type, interval_days, interval_weekdays, interval_month_dates, notification_times, start_date, created_at)
+     VALUES ('singleton', ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        title = excluded.title,
        notification_times = excluded.notification_times,
        created_at = created_at`,
-    [data.title, data.intervalType, data.intervalDays, JSON.stringify(data.notificationTimes), startDate, now]
+    [data.title, data.intervalType, data.intervalDays, weekdaysJson, monthDatesJson, JSON.stringify(data.notificationTimes), startDate, now]
   );
 
   return {
@@ -42,6 +47,8 @@ export async function upsertStreak(data: StreakFormData): Promise<Streak> {
     title: data.title,
     intervalType: data.intervalType,
     intervalDays: data.intervalDays,
+    intervalWeekdays: data.intervalWeekdays ?? [],
+    intervalMonthDates: data.intervalMonthDates ?? [],
     notificationTimes: data.notificationTimes,
     startDate,
     createdAt: existing?.createdAt ?? now,

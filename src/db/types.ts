@@ -1,8 +1,10 @@
 export interface StreakRow {
   id: string;
   title: string;
-  interval_type: 'daily' | 'every_n_days' | 'weekly';
+  interval_type: string;
   interval_days: number;
+  interval_weekdays: string | null;
+  interval_month_dates: string | null;
   notification_times: string;
   start_date: string;
   created_at: string;

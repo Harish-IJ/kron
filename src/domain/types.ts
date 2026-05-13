@@ -1,10 +1,12 @@
-export type IntervalType = 'daily' | 'every_n_days' | 'weekly';
+export type IntervalType = 'daily' | 'every_n_days' | 'weekly' | 'weekly_on_days' | 'monthly_on_dates';
 
 export interface Streak {
   id: 'singleton';
   title: string;
   intervalType: IntervalType;
   intervalDays: number;
+  intervalWeekdays?: number[];    // 0=Mon..6=Sun; only for weekly_on_days
+  intervalMonthDates?: number[];  // 1-31; only for monthly_on_dates
   notificationTimes: string[];
   startDate: string;
   createdAt: string;
@@ -44,6 +46,8 @@ export interface StreakFormData {
   title: string;
   intervalType: IntervalType;
   intervalDays: number;
+  intervalWeekdays?: number[];
+  intervalMonthDates?: number[];
   notificationTimes: string[];
 }
 
