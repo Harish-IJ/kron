@@ -18,7 +18,7 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const initialize = useAppStore(s => s.initialize);
-  const loadLogs = useLogsStore(s => s.load);
+  const loadAll = useLogsStore(s => s.loadAll);
 
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Bold': Inter_700Bold,
@@ -31,8 +31,8 @@ export default function RootLayout() {
     (async () => {
       try {
         await initDb();
-        await loadLogs();
-        await initialize();
+        await initialize();   // loads streaks + computes states
+        await loadAll();      // populates logsByStreakId using loaded streaks
         setDbReady(true);
       } catch (e) {
         setInitError(e instanceof Error ? e.message : 'Initialization failed');
@@ -76,6 +76,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="streak/new" options={{ presentation: 'modal', title: 'NEW STREAK', ...headerCommon }} />
         <Stack.Screen name="log/new" options={{ presentation: 'modal', title: 'NEW LOG', ...headerCommon }} />
         <Stack.Screen name="log/[id]" options={{ presentation: 'modal', title: 'EDIT LOG', ...headerCommon }} />
       </Stack>
