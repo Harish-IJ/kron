@@ -1,6 +1,7 @@
 import React, { useLayoutEffect } from 'react';
 import { FlatList, Pressable, StyleSheet } from 'react-native';
 import { router, useNavigation } from 'expo-router';
+import { useActiveStreak } from '../../src/hooks/use-streak';
 import { useLogs } from '../../src/hooks/use-logs';
 import { FeedLogCard } from '../../src/components/features/FeedLogCard';
 import { EmptyState } from '../../src/components/ui/EmptyState';
@@ -8,20 +9,44 @@ import { Icon } from '../../src/components/ui/Icon';
 import { colors, space } from '../../src/constants/theme';
 
 export default function FeedScreen() {
-  const { logs, delete: deleteLog } = useLogs();
+  const { activeStreakId } = useActiveStreak();
+  const { logs, delete: deleteLog } = useLogs(activeStreakId ?? '');
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={() => router.push('/log/new' as any)} hitSlop={8} style={{ marginRight: 16 }}>
-          <Icon name="plus" size={22} color={colors.ink} />
-        </Pressable>
-      ),
+      headerRight: activeStreakId
+        ? () => (
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/log/new', params: { streakId: activeStreakId } } as any)
+              }
+              hitSlop={8}
+              style={{ marginRight: 16 }}
+              accessibilityLabel="New log"
+              accessibilityRole="button"
+            >
+              <Icon name="plus" size={22} color={colors.ink} />
+            </Pressable>
+          )
+        : undefined,
     });
-  }, [navigation]);
+  }, [navigation, activeStreakId]);
 
-  const sortedLogs = [...logs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  if (!activeStreakId) {
+    return (
+      <EmptyState
+        headline="NO STREAK SELECTED"
+        subtext="Select a streak from Home to see its feed."
+        actionLabel="GO TO HOME"
+        onAction={() => router.push('/(tabs)/' as any)}
+      />
+    );
+  }
+
+  const sortedLogs = [...logs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   if (sortedLogs.length === 0) {
     return (
@@ -29,7 +54,9 @@ export default function FeedScreen() {
         headline="NO ENTRIES YET"
         subtext="Your logs will appear here."
         actionLabel="LOG TODAY"
-        onAction={() => router.push('/log/new' as any)}
+        onAction={() =>
+          router.push({ pathname: '/log/new', params: { streakId: activeStreakId } } as any)
+        }
       />
     );
   }
@@ -42,7 +69,7 @@ export default function FeedScreen() {
         <FeedLogCard
           log={item}
           onEdit={id => router.push(`/log/${id}` as any)}
-          onDelete={deleteLog}
+          onDelete={id => deleteLog(id)}
         />
       )}
       style={styles.list}
