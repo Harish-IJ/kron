@@ -1,12 +1,21 @@
 import React from 'react';
-import { router } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useLogs } from '../../src/hooks/use-logs';
 import { LogComposer } from '../../src/components/features/LogComposer';
 import { saveImage } from '../../src/services/media-service';
 import type { CreateLogInput } from '../../src/domain/types';
 
 export default function NewLogModal() {
-  const { create } = useLogs();
+  const { streakId } = useLocalSearchParams<{ streakId: string }>();
+
+  // Guard: this modal requires a streakId. If opened without one (direct navigation),
+  // dismiss immediately. All in-app entry points pass streakId explicitly.
+  if (!streakId) {
+    router.back();
+    return null;
+  }
+
+  const { create } = useLogs(streakId);
 
   const handleSave = async (data: CreateLogInput | import('../../src/domain/types').LogPatch) => {
     const input = data as CreateLogInput;
