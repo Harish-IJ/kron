@@ -60,6 +60,28 @@ const MIGRATIONS: Migration[] = [
       ALTER TABLE streak ADD COLUMN interval_month_dates TEXT;
     `,
   },
+  {
+    // Add streak_id to logs (multi-streak). Backfill existing rows with 'singleton'.
+    // streak_id is nullable at the DB level; repository always provides it at INSERT.
+    version: 4,
+    run: async (db) => {
+      await db.execAsync(`ALTER TABLE logs ADD COLUMN streak_id TEXT;`);
+      await db.runAsync(`UPDATE logs SET streak_id = 'singleton' WHERE streak_id IS NULL`);
+      await db.execAsync(
+        `CREATE INDEX IF NOT EXISTS idx_logs_streak_id ON logs (streak_id, created_at ASC);`
+      );
+    },
+  },
+  {
+    // Persist UI settings (e.g. activeStreakId) across app restarts.
+    version: 5,
+    sql: `
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key   TEXT NOT NULL PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `,
+  },
 ];
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
