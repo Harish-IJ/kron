@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, TextInput, StyleSheet, Alert } from 'react-native';
-import { useStreak } from '../../src/hooks/use-streak';
+import { router } from 'expo-router';
+import { useActiveStreak } from '../../src/hooks/use-streak';
 import { useLogs } from '../../src/hooks/use-logs';
 import { IntervalSelector } from '../../src/components/ui/IntervalSelector';
 import { SettingsRow } from '../../src/components/ui/SettingsRow';
@@ -9,12 +10,13 @@ import { SecondaryButton } from '../../src/components/ui/SecondaryButton';
 import { Typography } from '../../src/components/ui/Typography';
 import { exportAll } from '../../src/services/export-service';
 import { requestNotificationPermission } from '../../src/services/notification-service';
+import { EmptyState } from '../../src/components/ui/EmptyState';
 import { colors, space, borders } from '../../src/constants/theme';
 import type { IntervalType } from '../../src/domain/types';
 
 export default function SettingsScreen() {
-  const { streak, saveStreak, resetAll } = useStreak();
-  const { logs, load: reloadLogs } = useLogs();
+  const { streak, activeStreakId, updateStreak, updateStreakInterval, resetStreak, deleteStreak } = useActiveStreak();
+  const { logs } = useLogs(activeStreakId ?? '');
 
   const [title, setTitle] = useState(streak?.title ?? '');
   const [intervalType, setIntervalType] = useState<IntervalType>(streak?.intervalType ?? 'daily');
@@ -32,25 +34,67 @@ export default function SettingsScreen() {
     setIntervalMonthDates(streak?.intervalMonthDates ?? []);
   }, [streak]);
 
+  if (!activeStreakId || !streak) {
+    return (
+      <EmptyState
+        headline="NO STREAK SELECTED"
+        subtext="Select a streak from Home to manage settings."
+        actionLabel="GO TO HOME"
+        onAction={() => router.push('/(tabs)/' as any)}
+      />
+    );
+  }
+
   const handleSave = async () => {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      await saveStreak({ title: title.trim(), intervalType, intervalDays, intervalWeekdays, intervalMonthDates, notificationTimes: streak?.notificationTimes ?? [] });
+      if (!hasLogs) {
+        await updateStreakInterval(streak.id, intervalType, intervalDays, intervalWeekdays, intervalMonthDates);
+      }
+      await updateStreak(streak.id, { title: title.trim(), notificationTimes: streak.notificationTimes });
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = () => {
-    Alert.alert('Reset Streak', 'This will permanently delete all logs and streak history.', [
+    Alert.alert('Reset Streak', 'This will permanently delete all logs and streak history. The streak config will remain.', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Reset', style: 'destructive',
-        onPress: () => Alert.alert('Are you absolutely sure?', 'All data will be lost forever.', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Yes, Reset Everything', style: 'destructive', onPress: async () => { await resetAll(); await reloadLogs(); } },
-        ]),
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert('Are you absolutely sure?', 'All logs for this streak will be lost forever.', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Yes, Reset',
+              style: 'destructive',
+              onPress: async () => { await resetStreak(streak.id); },
+            },
+          ]),
+      },
+    ]);
+  };
+
+  const handleDelete = () => {
+    Alert.alert('Delete Streak', 'This will permanently delete this streak and all its logs.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert('Are you absolutely sure?', 'This streak and all its data will be lost forever.', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Yes, Delete',
+              style: 'destructive',
+              onPress: async () => {
+                await deleteStreak(streak.id);
+                router.replace('/(tabs)/' as any);
+              },
+            },
+          ]),
       },
     ]);
   };
@@ -98,14 +142,15 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Typography variant="caption" style={styles.sectionLabel}>DATA</Typography>
         <View style={styles.card}>
-          <SettingsRow label="EXPORT DATA" showChevron onPress={() => streak && exportAll(streak, logs)} />
+          <SettingsRow label="EXPORT DATA" showChevron onPress={() => exportAll(streak, logs)} />
           <SettingsRow label="ENABLE NOTIFICATIONS" showChevron onPress={requestNotificationPermission} />
         </View>
       </View>
 
       <View style={styles.section}>
         <Typography variant="caption" style={styles.sectionLabel}>DANGER ZONE</Typography>
-        <SecondaryButton label="RESET STREAK" onPress={handleReset} style={{ alignSelf: 'stretch' }} />
+        <SecondaryButton label="RESET STREAK" onPress={handleReset} style={{ alignSelf: 'stretch', marginBottom: space[3] }} />
+        <SecondaryButton label="DELETE STREAK" onPress={handleDelete} style={{ alignSelf: 'stretch' }} />
       </View>
     </ScrollView>
   );
