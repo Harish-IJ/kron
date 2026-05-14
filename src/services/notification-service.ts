@@ -44,8 +44,12 @@ export async function cancelAllNotifications(): Promise<void> {
   }
 }
 
-function parseHHMM(hhmm: string): { hours: number; minutes: number } {
-  const [h, m] = hhmm.split(':').map(Number);
+function parseHHMM(hhmm: string): { hours: number; minutes: number } | null {
+  const parts = hhmm.split(':');
+  if (parts.length !== 2) return null;
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  if (!Number.isInteger(h) || !Number.isInteger(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
   return { hours: h, minutes: m };
 }
 
@@ -77,7 +81,9 @@ export async function syncNotifications(
     nextWindowStart.setDate(nextWindowStart.getDate() + 1);
 
     for (const hhmm of streak.notificationTimes) {
-      const { hours, minutes } = parseHHMM(hhmm);
+      const parsed = parseHHMM(hhmm);
+      if (!parsed) continue;
+      const { hours, minutes } = parsed;
       const fireDate = new Date(
         nextWindowStart.getFullYear(),
         nextWindowStart.getMonth(),
@@ -109,7 +115,9 @@ export async function syncNotifications(
   for (let d = new Date(today); d <= windowEnd && scheduled < maxSchedule * streak.notificationTimes.length; d.setDate(d.getDate() + 1)) {
     const isToday = d.toDateString() === today.toDateString();
     for (const hhmm of streak.notificationTimes) {
-      const { hours, minutes } = parseHHMM(hhmm);
+      const parsed = parseHHMM(hhmm);
+      if (!parsed) continue;
+      const { hours, minutes } = parsed;
       const fireDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hours, minutes, 0);
       if (isToday && fireDate <= new Date()) continue;
       if (fireDate > new Date()) {

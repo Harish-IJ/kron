@@ -1,18 +1,21 @@
 import React from 'react';
-import { Pressable, StyleSheet, PressableProps } from 'react-native';
+import { Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Typography } from './Typography';
 import { colors } from '../../constants/theme';
 
-interface SecondaryButtonProps extends PressableProps {
+interface SecondaryButtonProps {
   label: string;
+  onPress?: () => void;
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function SecondaryButton({ label, disabled, style, ...props }: SecondaryButtonProps) {
+export function SecondaryButton({ label, disabled, style, onPress }: SecondaryButtonProps) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.btn, disabled && styles.disabled, pressed && styles.pressed, style as object]}
+      style={({ pressed }) => [styles.btn, disabled && styles.disabled, pressed && styles.pressed, style]}
       disabled={disabled}
-      {...props}
+      onPress={onPress}
     >
       <Typography variant="label">{label}</Typography>
     </Pressable>

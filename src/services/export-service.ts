@@ -32,13 +32,17 @@ export async function exportAll(streak: Streak, logs: Log[]): Promise<void> {
   if (mediaFolder) {
     for (const log of logs) {
       if (log.mediaPath) {
-        const absPath = getAbsolutePath(log.mediaPath);
-        const info = await FileSystem.getInfoAsync(absPath);
-        if (info.exists) {
-          const base64 = await FileSystem.readAsStringAsync(absPath, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          mediaFolder.file(`${log.id}.jpg`, base64, { base64: true });
+        try {
+          const absPath = getAbsolutePath(log.mediaPath);
+          const info = await FileSystem.getInfoAsync(absPath);
+          if (info.exists) {
+            const base64 = await FileSystem.readAsStringAsync(absPath, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            mediaFolder.file(`${log.id}.jpg`, base64, { base64: true });
+          }
+        } catch {
+          // skip unreadable media files — export continues without them
         }
       }
     }
@@ -52,7 +56,8 @@ export async function exportAll(streak: Streak, logs: Log[]): Promise<void> {
   });
 
   const canShare = await Sharing.isAvailableAsync();
-  if (canShare) {
-    await Sharing.shareAsync(zipPath, { mimeType: 'application/zip' });
+  if (!canShare) {
+    throw new Error('Sharing is not available on this device');
   }
+  await Sharing.shareAsync(zipPath, { mimeType: 'application/zip' });
 }

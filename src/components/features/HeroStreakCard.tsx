@@ -10,6 +10,16 @@ interface HeroStreakCardProps {
   streakState: StreakState;
 }
 
+function intervalLabel(streak: Streak): string {
+  switch (streak.intervalType) {
+    case 'daily': return 'DAILY';
+    case 'weekly':
+    case 'weekly_on_days': return 'WEEKLY';
+    case 'monthly_on_dates': return 'MONTHLY';
+    default: return `EVERY ${streak.intervalDays} DAYS`;
+  }
+}
+
 export function HeroStreakCard({ streak, streakState }: HeroStreakCardProps) {
   const animValue = useRef(new Animated.Value(0)).current;
 
@@ -19,7 +29,7 @@ export function HeroStreakCard({ streak, streakState }: HeroStreakCardProps) {
       duration: 600,
       useNativeDriver: false,
     }).start();
-  }, []);
+  }, [streakState.currentStreak, animValue]);
 
   const isSatisfied = streakState.isCurrentBucketSatisfied;
 
@@ -37,9 +47,7 @@ export function HeroStreakCard({ streak, streakState }: HeroStreakCardProps) {
       <Typography variant="caption" color={colors.navy} style={styles.sub}>DAY STREAK</Typography>
       <View style={styles.bottomRow}>
         <Typography variant="caption" color={`${colors.navy}99`}>SINCE {streak.startDate}</Typography>
-        <Typography variant="caption" color={colors.navy}>
-          {streak.intervalType === 'daily' ? 'DAILY' : streak.intervalType === 'weekly' ? 'WEEKLY' : `EVERY ${streak.intervalDays} DAYS`}
-        </Typography>
+        <Typography variant="caption" color={colors.navy}>{intervalLabel(streak)}</Typography>
       </View>
     </KronCard>
   );

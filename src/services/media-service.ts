@@ -12,6 +12,8 @@ async function ensureMediaDir(): Promise<void> {
 }
 
 export async function pickImage(): Promise<string | null> {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') return null;
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     quality: 0.8,
@@ -22,8 +24,9 @@ export async function pickImage(): Promise<string | null> {
 }
 
 export async function saveImage(sourceUri: string, logId: string): Promise<string> {
+  const safeId = logId.replace(/[/\\]/g, '');
   await ensureMediaDir();
-  const relativePath = `${MEDIA_DIR}${logId}.jpg`;
+  const relativePath = `${MEDIA_DIR}${safeId}.jpg`;
   const destPath = `${FileSystem.documentDirectory}${relativePath}`;
   await FileSystem.copyAsync({ from: sourceUri, to: destPath });
   return relativePath;

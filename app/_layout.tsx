@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,6 +16,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
   const initialize = useAppStore(s => s.initialize);
   const loadLogs = useLogsStore(s => s.load);
 
@@ -32,14 +33,30 @@ export default function RootLayout() {
         await initDb();
         await loadLogs();
         await initialize();
-      } finally {
         setDbReady(true);
+      } catch (e) {
+        setInitError(e instanceof Error ? e.message : 'Initialization failed');
+      } finally {
         await SplashScreen.hideAsync();
       }
     })();
   }, [fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) return null;
+
+  if (initError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.base, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 13, color: colors.orange, letterSpacing: 1.4, marginBottom: 12 }}>
+          INITIALIZATION ERROR
+        </Text>
+        <Text style={{ fontFamily: 'JetBrainsMono-Regular', fontSize: 12, color: colors.ink, textAlign: 'center' }}>
+          {initError}
+        </Text>
+      </View>
+    );
+  }
+
   if (!dbReady) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.base, alignItems: 'center', justifyContent: 'center' }}>

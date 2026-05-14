@@ -92,6 +92,7 @@ export function computeAnalytics(
 
   const ratingTrend = logs
     .filter(l => l.rating !== null)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     .map(l => ({ date: toLocalDateString(new Date(l.createdAt)), rating: l.rating as number }));
 
   return {

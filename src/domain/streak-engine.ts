@@ -8,9 +8,9 @@ import {
   getScheduledMonthDates,
 } from './interval';
 
-function computeDateListBuckets(logs: Log[], dates: string[]): IntervalBucket[] {
+function computeDateListBuckets(logs: Log[], dates: string[], asOf: Date): IntervalBucket[] {
   if (dates.length === 0) {
-    const today = toLocalDateString(new Date());
+    const today = toLocalDateString(asOf);
     return [{ index: 0, startDate: today, endDate: today, completed: false, logCount: 0 }];
   }
   const logsByDate = new Map<string, number>();
@@ -31,11 +31,11 @@ export function computeBuckets(
 ): IntervalBucket[] {
   if (streak.intervalType === 'weekly_on_days') {
     const dates = getScheduledWeekdayDates(streak.startDate, streak.intervalWeekdays ?? [], asOf);
-    return computeDateListBuckets(logs, dates);
+    return computeDateListBuckets(logs, dates, asOf);
   }
   if (streak.intervalType === 'monthly_on_dates') {
     const dates = getScheduledMonthDates(streak.startDate, streak.intervalMonthDates ?? [], asOf);
-    return computeDateListBuckets(logs, dates);
+    return computeDateListBuckets(logs, dates, asOf);
   }
 
   const currentIdx = getCurrentBucketIndex(streak.startDate, streak.intervalDays, asOf);
@@ -59,6 +59,22 @@ export function computeBuckets(
 }
 
 export function computeStreakState(buckets: IntervalBucket[], asOf: Date): StreakState {
+  if (buckets.length === 0) {
+    const today = toLocalDateString(asOf);
+    const empty: IntervalBucket = { index: 0, startDate: today, endDate: today, completed: false, logCount: 0 };
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      currentBucket: empty,
+      isCurrentBucketSatisfied: false,
+      currentBucketStart: today,
+      currentBucketEnd: today,
+      nextDeadline: new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate(), 23, 59, 59),
+      totalBuckets: 0,
+      completedBuckets: 0,
+    };
+  }
+
   const current = buckets[buckets.length - 1];
 
   const scanFrom = current.completed ? buckets.length - 1 : buckets.length - 2;

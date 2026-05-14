@@ -21,6 +21,7 @@ export function getBucketIndex(
   logLocalDate: string,
   intervalDays: number
 ): number {
+  if (intervalDays <= 0) return -1;
   const days = daysBetween(startDate, logLocalDate);
   if (days < 0) return -1;
   return Math.floor(days / intervalDays);

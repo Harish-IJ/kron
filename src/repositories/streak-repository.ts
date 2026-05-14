@@ -3,15 +3,24 @@ import type { StreakRow } from '../db/types';
 import type { Streak, IntervalType, StreakFormData } from '../domain/types';
 import { toLocalDateString } from '../domain/interval';
 
+function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 function rowToStreak(row: StreakRow): Streak {
   return {
     id: 'singleton',
     title: row.title,
     intervalType: row.interval_type as IntervalType,
     intervalDays: row.interval_days,
-    intervalWeekdays: row.interval_weekdays ? JSON.parse(row.interval_weekdays) as number[] : [],
-    intervalMonthDates: row.interval_month_dates ? JSON.parse(row.interval_month_dates) as number[] : [],
-    notificationTimes: JSON.parse(row.notification_times) as string[],
+    intervalWeekdays: safeJsonParse<number[]>(row.interval_weekdays, []),
+    intervalMonthDates: safeJsonParse<number[]>(row.interval_month_dates, []),
+    notificationTimes: safeJsonParse<string[]>(row.notification_times, []),
     startDate: row.start_date,
     createdAt: row.created_at,
   };
@@ -36,6 +45,7 @@ export async function upsertStreak(data: StreakFormData): Promise<Streak> {
     `INSERT INTO streak (id, title, interval_type, interval_days, interval_weekdays, interval_month_dates, notification_times, start_date, created_at)
      VALUES ('singleton', ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
+       -- Interval fields are immutable after first insert; only title and notification_times can change.
        title = excluded.title,
        notification_times = excluded.notification_times,
        created_at = created_at`,

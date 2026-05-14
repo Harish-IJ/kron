@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, TextInput, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { Typography } from '../ui/Typography';
 import { PrimaryButton } from '../ui/PrimaryButton';
@@ -33,6 +33,8 @@ export function LogComposer({ initial, existingTimestamp, onSave, onCancel }: Lo
     setLoading(true);
     try {
       await onSave({ title: title.trim(), description: description.trim() || null, rating, mediaPath, mediaType: mediaPath ? 'image' : null });
+    } catch {
+      Alert.alert('Error', 'Failed to save log. Please try again.');
     } finally {
       setLoading(false);
     }

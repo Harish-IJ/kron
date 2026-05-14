@@ -10,6 +10,11 @@ export function getDb(): SQLite.SQLiteDatabase {
 
 export async function initDb(): Promise<void> {
   if (_db) return;
-  _db = await SQLite.openDatabaseAsync('kron.db');
-  await runMigrations(_db);
+  try {
+    _db = await SQLite.openDatabaseAsync('kron.db');
+    await runMigrations(_db);
+  } catch (e) {
+    _db = null;
+    throw new Error(`Failed to initialize database: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }

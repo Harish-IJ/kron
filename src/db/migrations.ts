@@ -1,6 +1,10 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const MIGRATIONS: Array<{ version: number; sql: string }> = [
+type Migration =
+  | { version: number; sql: string }
+  | { version: number; run: (db: SQLiteDatabase) => Promise<void> };
+
+const MIGRATIONS: Migration[] = [
   {
     version: 1,
     sql: `
@@ -26,25 +30,30 @@ const MIGRATIONS: Array<{ version: number; sql: string }> = [
     `,
   },
   {
-    // Recreate logs table in case a stale schema (missing title column) was
-    // created during early development before migration v1 was finalized.
+    // Recreate logs only when the title column is missing (stale early-dev schema).
     version: 2,
-    sql: `
-      DROP TABLE IF EXISTS logs;
-      CREATE TABLE logs (
-        id           TEXT    NOT NULL PRIMARY KEY,
-        title        TEXT    NOT NULL,
-        description  TEXT,
-        rating       INTEGER CHECK (rating IS NULL OR rating BETWEEN 1 AND 5),
-        media_path   TEXT,
-        media_type   TEXT    CHECK (media_type IS NULL OR media_type = 'image'),
-        created_at   TEXT    NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs (created_at ASC);
-    `,
+    run: async (db) => {
+      const cols = await db.getAllAsync<{ name: string }>('PRAGMA table_info(logs)');
+      const hasTitle = cols.some(c => c.name === 'title');
+      if (!hasTitle) {
+        await db.execAsync(`
+          DROP TABLE IF EXISTS logs;
+          CREATE TABLE logs (
+            id           TEXT    NOT NULL PRIMARY KEY,
+            title        TEXT    NOT NULL,
+            description  TEXT,
+            rating       INTEGER CHECK (rating IS NULL OR rating BETWEEN 1 AND 5),
+            media_path   TEXT,
+            media_type   TEXT    CHECK (media_type IS NULL OR media_type = 'image'),
+            created_at   TEXT    NOT NULL
+          );
+          CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs (created_at ASC);
+        `);
+      }
+    },
   },
   {
-    // Add weekday and month-date columns for the new weekly_on_days and monthly_on_dates interval types.
+    // Add weekday and month-date columns for weekly_on_days and monthly_on_dates interval types.
     version: 3,
     sql: `
       ALTER TABLE streak ADD COLUMN interval_weekdays TEXT;
@@ -68,11 +77,17 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
 
   for (const migration of MIGRATIONS) {
     if (!appliedVersions.has(migration.version)) {
-      await db.execAsync(migration.sql);
-      await db.runAsync(
-        'INSERT INTO migrations (version, applied_at) VALUES (?, ?)',
-        [migration.version, new Date().toISOString()]
-      );
+      await db.withTransactionAsync(async () => {
+        if ('sql' in migration) {
+          await db.execAsync(migration.sql);
+        } else {
+          await migration.run(db);
+        }
+        await db.runAsync(
+          'INSERT INTO migrations (version, applied_at) VALUES (?, ?)',
+          [migration.version, new Date().toISOString()]
+        );
+      });
     }
   }
 }

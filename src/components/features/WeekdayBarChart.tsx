@@ -15,13 +15,13 @@ export function WeekdayBarChart({ pattern }: { pattern: number[] }) {
       <Typography variant="caption" style={styles.label}>WEEKDAY PATTERN</Typography>
       <View style={styles.chart}>
         {pattern.map((val, i) => {
-          const barHeight = Math.max(2, (val / maxVal) * BAR_H);
+          const barHeight = val === 0 ? 0 : Math.max(2, (val / maxVal) * BAR_H);
           return (
             <View key={i} style={styles.col}>
               <View style={{ height: BAR_H - barHeight }} />
               <View style={{ position: 'relative', width: 24 }}>
                 {i === peakDay && val > 0 && <View style={styles.peak} />}
-                <View style={[styles.bar, { height: barHeight }]} />
+                {barHeight > 0 && <View style={[styles.bar, { height: barHeight }]} />}
               </View>
               <Typography variant="caption" style={styles.dayLabel}>{DAYS[i]}</Typography>
             </View>

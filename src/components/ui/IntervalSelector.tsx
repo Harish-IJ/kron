@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { Typography } from './Typography';
 import { PrimaryButton } from './PrimaryButton';
-import { colors, space } from '../../constants/theme';
+import { colors, fonts, space } from '../../constants/theme';
 import type { IntervalType } from '../../domain/types';
 
 interface Option { label: string; intervalType: IntervalType; intervalDays: number; }
@@ -84,7 +84,7 @@ export function IntervalSelector({
         .filter(n => !isNaN(n) && n >= 1 && n <= 31);
       const unique = [...new Set(dates)].sort((a, b) => a - b);
       if (unique.length === 0) return;
-      onChange('monthly_on_dates', 30, [], unique);
+      onChange('monthly_on_dates', 1, [], unique);
       setModalVisible(false);
     }
   };
@@ -256,7 +256,7 @@ export function IntervalSelector({
             <PrimaryButton
               label="APPLY INTERVAL"
               onPress={handleApply}
-              style={applyDisabled ? { opacity: 0.4 } : undefined}
+              disabled={applyDisabled}
             />
           </View>
         </KeyboardAvoidingView>
@@ -272,7 +272,7 @@ function customLabel(
   monthDates: number[],
 ): string {
   if (type === 'weekly_on_days' && weekdays.length > 0) {
-    const names = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const names = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     return weekdays.map(d => names[d]).join('/');
   }
   if (type === 'monthly_on_dates' && monthDates.length > 0) {
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   dayChip: { paddingHorizontal: 10, paddingVertical: 7, borderWidth: 1, borderColor: colors.ink },
   dayChipSelected: { borderWidth: 2, borderColor: colors.orange },
   dateInput: {
-    fontFamily: 'JetBrainsMono-Regular',
+    fontFamily: fonts.mono,
     fontSize: 14,
     color: colors.ink,
     borderWidth: 2,

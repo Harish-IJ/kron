@@ -38,7 +38,7 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
   },
 
   async delete(id: string) {
-    const log = get().logs.find(l => l.id === id);
+    const log = await logRepo.findLogById(id);
     await logRepo.deleteLog(id);
     if (log?.mediaPath) {
       await mediaService.deleteImage(log.mediaPath).catch(() => {});
