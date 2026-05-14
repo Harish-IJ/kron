@@ -1,12 +1,12 @@
 export type IntervalType = 'daily' | 'every_n_days' | 'weekly' | 'weekly_on_days' | 'monthly_on_dates';
 
 export interface Streak {
-  id: 'singleton';
+  id: string;                        // UUID v4 — no longer the literal 'singleton'
   title: string;
   intervalType: IntervalType;
   intervalDays: number;
-  intervalWeekdays?: number[];    // 0=Mon..6=Sun; only for weekly_on_days
-  intervalMonthDates?: number[];  // 1-31; only for monthly_on_dates
+  intervalWeekdays?: number[];       // 0=Mon..6=Sun; only for weekly_on_days
+  intervalMonthDates?: number[];     // 1-31; only for monthly_on_dates
   notificationTimes: string[];
   startDate: string;
   createdAt: string;
@@ -14,6 +14,7 @@ export interface Streak {
 
 export interface Log {
   id: string;
+  streakId: string;                  // FK → streak.id — every log belongs to exactly one streak
   title: string;
   description: string | null;
   rating: 1 | 2 | 3 | 4 | 5 | null;
@@ -51,6 +52,10 @@ export interface StreakFormData {
   notificationTimes: string[];
 }
 
-export type InsertLogInput = Pick<Log, 'title' | 'description' | 'rating' | 'mediaPath' | 'mediaType'>;
+// InsertLogInput: used by the repository — includes streakId so every log is linked at INSERT
+export type InsertLogInput = Pick<Log, 'streakId' | 'title' | 'description' | 'rating' | 'mediaPath' | 'mediaType'>;
+
+// CreateLogInput: used by UI and store.create() — streakId is passed separately as a store arg
+export type CreateLogInput = Omit<InsertLogInput, 'streakId'>;
+
 export type LogPatch = Partial<Pick<Log, 'title' | 'description' | 'rating' | 'mediaPath' | 'mediaType'>>;
-export type CreateLogInput = InsertLogInput;
