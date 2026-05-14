@@ -1,38 +1,67 @@
-import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { useStreak } from '../../src/hooks/use-streak';
-import { useAnalytics } from '../../src/hooks/use-analytics';
-import { HeroStreakCard } from '../../src/components/features/HeroStreakCard';
-import { DeadlineCard } from '../../src/components/features/DeadlineCard';
-import { MiniHeatmap } from '../../src/components/features/MiniHeatmap';
+import React, { useLayoutEffect } from 'react';
+import { ScrollView, Pressable, StyleSheet } from 'react-native';
+import { router, useNavigation } from 'expo-router';
+import { useActiveStreak } from '../../src/hooks/use-streak';
+import { StreakCard } from '../../src/components/features/StreakCard';
 import { EmptyState } from '../../src/components/ui/EmptyState';
-import { PrimaryButton } from '../../src/components/ui/PrimaryButton';
+import { Icon } from '../../src/components/ui/Icon';
 import { colors, space } from '../../src/constants/theme';
 
 export default function HomeScreen() {
-  const { streak, streakState, isLoading } = useStreak();
-  const analytics = useAnalytics();
+  const { streaks, streakStates, isLoading, setActiveStreak } = useActiveStreak();
+  const navigation = useNavigation();
+  const canAddStreak = streaks.length < 10;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: canAddStreak
+        ? () => (
+            <Pressable
+              onPress={() => router.push('/streak/new' as any)}
+              hitSlop={8}
+              style={{ marginRight: 16 }}
+              accessibilityLabel="Add streak"
+              accessibilityRole="button"
+            >
+              <Icon name="plus" size={22} color={colors.ink} />
+            </Pressable>
+          )
+        : undefined,
+    });
+  }, [navigation, canAddStreak]);
 
   if (isLoading) return null;
 
-  if (!streak || !streakState) {
+  if (streaks.length === 0) {
     return (
       <EmptyState
-        headline="NO STREAK"
-        subtext="Configure your practice in Settings."
-        actionLabel="GO TO SETTINGS"
-        onAction={() => router.push('/(tabs)/settings' as any)}
+        headline="NO STREAKS"
+        subtext="Create your first streak to get started."
+        actionLabel="CREATE STREAK"
+        onAction={() => router.push('/streak/new' as any)}
       />
     );
   }
 
+  const handleStreakPress = (id: string) => {
+    setActiveStreak(id);
+    router.push('/(tabs)/feed' as any);
+  };
+
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <HeroStreakCard streak={streak} streakState={streakState} />
-      <DeadlineCard streakState={streakState} />
-      {analytics && <MiniHeatmap cells={analytics.heatmapData} />}
-      <PrimaryButton label="LOG TODAY" onPress={() => router.push('/log/new' as any)} style={styles.cta} />
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      {streaks.map(streak => (
+        <StreakCard
+          key={streak.id}
+          streak={streak}
+          streakState={streakStates[streak.id]}
+          onPress={() => handleStreakPress(streak.id)}
+        />
+      ))}
     </ScrollView>
   );
 }
@@ -40,5 +69,4 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.base },
   content: { padding: space[5], paddingBottom: space[9] },
-  cta: { marginTop: space[2] },
 });
