@@ -6,6 +6,7 @@ import type { Log, InsertLogInput, LogPatch } from '../domain/types';
 function rowToLog(row: LogRow): Log {
   return {
     id: row.id,
+    streakId: row.streak_id ?? '',
     title: row.title,
     description: row.description,
     rating: row.rating as Log['rating'],
@@ -15,9 +16,12 @@ function rowToLog(row: LogRow): Log {
   };
 }
 
-export async function findAllLogs(): Promise<Log[]> {
+export async function findLogsByStreakId(streakId: string): Promise<Log[]> {
   const db = getDb();
-  const rows = await db.getAllAsync<LogRow>('SELECT * FROM logs ORDER BY created_at ASC');
+  const rows = await db.getAllAsync<LogRow>(
+    'SELECT * FROM logs WHERE streak_id = ? ORDER BY created_at ASC',
+    [streakId]
+  );
   return rows.map(rowToLog);
 }
 
@@ -32,10 +36,19 @@ export async function insertLog(input: InsertLogInput): Promise<Log> {
   const id = Crypto.randomUUID();
   const createdAt = new Date().toISOString();
   await db.runAsync(
-    'INSERT INTO logs (id, title, description, rating, media_path, media_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, input.title, input.description ?? null, input.rating ?? null, input.mediaPath ?? null, input.mediaType ?? null, createdAt]
+    'INSERT INTO logs (id, streak_id, title, description, rating, media_path, media_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, input.streakId, input.title, input.description ?? null, input.rating ?? null, input.mediaPath ?? null, input.mediaType ?? null, createdAt]
   );
-  return { id, ...input, description: input.description ?? null, rating: input.rating ?? null, mediaPath: input.mediaPath ?? null, mediaType: input.mediaType ?? null, createdAt };
+  return {
+    id,
+    streakId: input.streakId,
+    title: input.title,
+    description: input.description ?? null,
+    rating: input.rating ?? null,
+    mediaPath: input.mediaPath ?? null,
+    mediaType: input.mediaType ?? null,
+    createdAt,
+  };
 }
 
 export async function updateLog(id: string, patch: LogPatch): Promise<Log> {
@@ -60,4 +73,9 @@ export async function updateLog(id: string, patch: LogPatch): Promise<Log> {
 export async function deleteLog(id: string): Promise<void> {
   const db = getDb();
   await db.runAsync('DELETE FROM logs WHERE id = ?', [id]);
+}
+
+export async function deleteLogsByStreakId(streakId: string): Promise<void> {
+  const db = getDb();
+  await db.runAsync('DELETE FROM logs WHERE streak_id = ?', [streakId]);
 }
