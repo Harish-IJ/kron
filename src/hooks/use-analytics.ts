@@ -5,8 +5,12 @@ import { computeBuckets } from '../domain/streak-engine';
 import { computeAnalytics } from '../domain/analytics-engine';
 
 export function useAnalytics() {
-  const streak = useAppStore(s => s.streak);
-  const logs = useLogsStore(s => s.logs);
+  const streaks = useAppStore(s => s.streaks);
+  const activeStreakId = useAppStore(s => s.activeStreakId);
+  const logsByStreakId = useLogsStore(s => s.logsByStreakId);
+
+  const streak = streaks.find(s => s.id === activeStreakId) ?? null;
+  const logs = activeStreakId ? (logsByStreakId[activeStreakId] ?? []) : [];
 
   return useMemo(() => {
     if (!streak || logs.length === 0) return null;
