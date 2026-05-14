@@ -2,7 +2,7 @@ import { computeBuckets, computeStreakState } from '../streak-engine';
 import type { Streak, Log } from '../types';
 
 const streak = (overrides?: Partial<Streak>): Streak => ({
-  id: 'singleton',
+  id: 'test-streak-1',
   title: 'Test',
   intervalType: 'daily',
   intervalDays: 1,
@@ -14,6 +14,7 @@ const streak = (overrides?: Partial<Streak>): Streak => ({
 
 const log = (id: string, localDate: string): Log => ({
   id,
+  streakId: 'test-streak-1',
   title: `Log ${id}`,
   description: null,
   rating: null,

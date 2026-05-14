@@ -2,7 +2,7 @@ import { computeAnalytics } from '../analytics-engine';
 import type { Streak, Log, IntervalBucket } from '../types';
 
 const streak = (): Streak => ({
-  id: 'singleton',
+  id: 'test-streak-1',
   title: 'Test',
   intervalType: 'daily',
   intervalDays: 1,
@@ -13,6 +13,7 @@ const streak = (): Streak => ({
 
 const log = (id: string, date: string, rating?: 1|2|3|4|5): Log => ({
   id,
+  streakId: 'test-streak-1',
   title: `Log ${id}`,
   description: null,
   rating: rating ?? null,
