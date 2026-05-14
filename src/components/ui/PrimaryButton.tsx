@@ -15,12 +15,16 @@ export function PrimaryButton({ label, loading, disabled, style, onPress }: Prim
   const isDisabled = disabled || loading;
   return (
     <Pressable
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: isDisabled, busy: !!loading }}
       style={({ pressed }) => [styles.btn, isDisabled && styles.disabled, pressed && styles.pressed, style]}
       disabled={isDisabled}
       onPress={onPress}
     >
       {loading
-        ? <ActivityIndicator color={colors.base} />
+        ? <ActivityIndicator color={colors.base} accessibilityLiveRegion="polite" />
         : <Typography variant="label" color={colors.base}>{label}</Typography>
       }
     </Pressable>
