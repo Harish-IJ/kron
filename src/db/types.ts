@@ -12,6 +12,7 @@ export interface StreakRow {
 
 export interface LogRow {
   id: string;
+  streak_id: string | null;          // nullable in DB; always set after migration v4
   title: string;
   description: string | null;
   rating: number | null;
