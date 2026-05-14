@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
-import { useStreak } from '../../src/hooks/use-streak';
+import { router } from 'expo-router';
+import { useActiveStreak } from '../../src/hooks/use-streak';
 import { useAnalytics } from '../../src/hooks/use-analytics';
 import { FullHeatmap } from '../../src/components/features/FullHeatmap';
 import { StreakHistoryBar } from '../../src/components/features/StreakHistoryBar';
@@ -22,8 +23,19 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 export default function AnalyticsScreen() {
-  const { streak } = useStreak();
+  const { streak, activeStreakId } = useActiveStreak();
   const analytics = useAnalytics();
+
+  if (!activeStreakId) {
+    return (
+      <EmptyState
+        headline="NO STREAK SELECTED"
+        subtext="Select a streak from Home to view analytics."
+        actionLabel="GO TO HOME"
+        onAction={() => router.push('/(tabs)/' as any)}
+      />
+    );
+  }
 
   if (!streak || !analytics) {
     return <EmptyState headline="NO ENTRIES YET" subtext="Analytics appear after you start logging." />;
@@ -32,7 +44,11 @@ export default function AnalyticsScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.statRow}>
-        <StatCard label="COMPLETION" value={`${analytics.completionPercent}%`} sub={`${analytics.completedBuckets} OF ${analytics.totalBuckets} WINDOWS`} />
+        <StatCard
+          label="COMPLETION"
+          value={`${analytics.completionPercent}%`}
+          sub={`${analytics.completedBuckets} OF ${analytics.totalBuckets} WINDOWS`}
+        />
         <StatCard label="CONSISTENCY" value={`${analytics.consistencyScore}`} sub="SCORE / 100" />
       </View>
       <FullHeatmap cells={analytics.heatmapData} />
